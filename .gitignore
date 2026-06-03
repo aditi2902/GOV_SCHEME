@@ -1,0 +1,12 @@
+myenv/
+__pycache__/
+.env
+node_modules/
+data/chroma_db/
+.DS_Store
+*.pyc
+frontend/dist/
+dist/
+build/
+.vscode/
+.idea/

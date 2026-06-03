@@ -1,0 +1,18 @@
+# Core
+fastapi
+uvicorn[standard]
+python-dotenv
+pydantic
+
+# Data
+pandas
+numpy
+
+# AI / LLM
+google-genai
+
+# Vector Store (RAG)
+chromadb
+
+# PDF parsing (for future RAG ingestion)
+pymupdf
