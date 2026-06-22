@@ -1,4 +1,4 @@
-const API_BASE = 'http://localhost:8000/api';
+const API_BASE = 'http://localhost:8080/api';
 
 export async function analyzeProfile(text) {
   const res = await fetch(`${API_BASE}/analyze`, {

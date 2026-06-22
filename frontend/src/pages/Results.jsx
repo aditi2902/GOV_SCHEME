@@ -283,33 +283,6 @@ export default function Results() {
           </section>
         )}
 
-        {/* AI Guidance */}
-        {guidance && (
-          <section className="results-section animate-fadeInUp">
-            <h2 className="heading-md results-section-title">
-              <HiOutlineBriefcase /> AI Application Roadmap
-            </h2>
-            <button
-              className="btn btn-secondary"
-              onClick={() => setShowGuidance(!showGuidance)}
-              style={{ marginBottom: 16 }}
-            >
-              {showGuidance ? 'Hide' : 'Show'} AI Guidance
-            </button>
-            {showGuidance && (
-              <div className="guidance-card glass-card">
-                <div className="guidance-content" dangerouslySetInnerHTML={{
-                  __html: guidance
-                    .replace(/\n/g, '<br/>')
-                    .replace(/#{1,3}\s(.+)/g, '<h4>$1</h4>')
-                    .replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>')
-                    .replace(/\*(.+?)\*/g, '<em>$1</em>')
-                }} />
-              </div>
-            )}
-          </section>
-        )}
-
         {/* Chat CTA */}
         <div className="results-cta glass-card animate-fadeInUp">
           <h3 className="heading-md">Have questions about these schemes?</h3>
