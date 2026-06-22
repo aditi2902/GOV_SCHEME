@@ -79,17 +79,19 @@ export default function Analyze() {
                 </>
               ) : (
                 <>
-                  <HiOutlineSearch /> Find Schemes + AI Guidance
+                  <HiOutlineSearch /> Deep Analysis + AI Guidance
                 </>
               )}
             </button>
+            <div className="action-divider" style={{ textAlign: 'center', color: 'var(--text-muted)', fontSize: '0.875rem', margin: '12px 0' }}>OR</div>
             <button
               type="button"
               className="btn btn-secondary btn-lg"
               disabled={loading}
               onClick={(e) => handleSubmit(e, true)}
+              style={{ width: '100%' }}
             >
-              <HiOutlineLightningBolt /> Quick Analysis
+              <HiOutlineLightningBolt /> Quick Match (Instant)
             </button>
           </div>
 
@@ -98,8 +100,8 @@ export default function Analyze() {
               <div className="loading-dots">
                 <span /><span /><span />
               </div>
-              <p>Our 6 AI agents are analyzing your profile...</p>
-              <p className="loading-sub">This takes 10-30 seconds for full analysis</p>
+              <p>Our AI agents are extracting your profile...</p>
+              <p className="loading-sub">Deep Analysis takes 10-30 seconds. Quick Match is instant.</p>
             </div>
           )}
         </form>

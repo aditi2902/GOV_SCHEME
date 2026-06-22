@@ -1,7 +1,15 @@
-import { HiOutlineStar, HiOutlineCurrencyRupee, HiOutlineAcademicCap, HiOutlineShieldCheck } from 'react-icons/hi';
+import { useState, useEffect } from 'react';
+import { HiOutlineStar, HiOutlineCurrencyRupee, HiOutlineAcademicCap, HiOutlineShieldCheck, HiOutlineCheckCircle } from 'react-icons/hi';
 import './SchemeCard.css';
 
-export default function SchemeCard({ scheme, rank, onClick }) {
+export default function SchemeCard({ scheme, rank, onViewDetails }) {
+  const [isViewed, setIsViewed] = useState(false);
+
+  useEffect(() => {
+    const viewed = JSON.parse(localStorage.getItem('viewed_schemes') || '[]');
+    setIsViewed(viewed.includes(scheme.slug));
+  }, [scheme.slug]);
+
   const getBenefitColor = (type) => {
     const colors = {
       scholarship: 'badge-primary',
@@ -20,7 +28,14 @@ export default function SchemeCard({ scheme, rank, onClick }) {
   };
 
   return (
-    <div className="scheme-card glass-card" onClick={onClick} role="button" tabIndex={0}>
+    <div
+      className={`scheme-card glass-card ${isViewed ? 'scheme-card--viewed' : ''}`}
+      role="button"
+      tabIndex={0}
+      onClick={() => onViewDetails && onViewDetails(scheme.slug)}
+      onKeyDown={(e) => e.key === 'Enter' && onViewDetails && onViewDetails(scheme.slug)}
+      id={`scheme-card-${scheme.slug}`}
+    >
       <div className="scheme-card-header">
         <div className="scheme-rank-badge">#{rank}</div>
         <div className="scheme-score-ring">
@@ -38,6 +53,13 @@ export default function SchemeCard({ scheme, rank, onClick }) {
           <span className="score-text">{Math.round(scheme.match_score || 0)}%</span>
         </div>
       </div>
+
+      {/* Viewed badge */}
+      {isViewed && (
+        <div className="scheme-viewed-badge">
+          <HiOutlineCheckCircle /> Viewed
+        </div>
+      )}
 
       <h3 className="scheme-card-title">{scheme.scheme_name}</h3>
 

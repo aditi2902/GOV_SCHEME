@@ -11,6 +11,7 @@ export default function Navbar() {
   const links = [
     { to: '/', label: 'Home' },
     { to: '/analyze', label: 'Find Schemes' },
+    { to: '/benefits', label: 'Benefit Analysis' },
     { to: '/chat', label: 'Ask AI' },
   ];
 

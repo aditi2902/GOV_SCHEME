@@ -45,6 +45,30 @@ def run_analysis(user_text: str, include_guidance: bool = True) -> dict:
     # ── Agent 1: Profile Extraction ────────────────
     profile = extract_profile(user_text)
 
+    # ── Completeness Check ─────────────────────────
+    # Require at least 2 of these key fields to proceed
+    KEY_FIELDS = ["age", "gender", "education_level", "state", "income", "category"]
+    provided = [f for f in KEY_FIELDS if profile.get(f) is not None and profile.get(f) is not False]
+
+    if len(provided) < 2:
+        return {
+            "profile": profile,
+            "insufficient_data": True,
+            "missing_fields": [f for f in KEY_FIELDS if f not in provided],
+            "total_schemes": len(df),
+            "eligible_count": 0,
+            "potential_annual_benefit": 0,
+            "readiness_score": 0,
+            "eligible_schemes": [],
+            "top_rejection_reasons": [],
+            "document_checklist": [],
+            "guidance": "",
+            "error_message": (
+                "We couldn't find enough information in your description to match schemes accurately. "
+                "Please include at least your age or gender, education level, and state."
+            ),
+        }
+
     # ── Agent 2: Eligibility Check ─────────────────
     eligibility_results = []
 
@@ -92,6 +116,7 @@ def run_analysis(user_text: str, include_guidance: bool = True) -> dict:
                 if pd.notna(s.get("details")) and len(str(s.get("details", ""))) > 200
                 else str(s.get("details", ""))
             ),
+            "portal_url": f"https://www.myscheme.gov.in/schemes/{r['slug']}",
         })
 
     # ── Agent 5: Document Checklists ───────────────
@@ -214,6 +239,7 @@ def get_scheme_detail(slug: str) -> dict | None:
             if pd.notna(row.get("gender"))
             else None
         ),
+        "portal_url": f"https://www.myscheme.gov.in/schemes/{slug}",
     }
 
 

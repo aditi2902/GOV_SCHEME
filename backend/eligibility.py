@@ -12,6 +12,17 @@ Returns not just pass/fail but:
 import pandas as pd
 
 
+# Education level → typical max age for schemes targeting that level
+_EDU_AGE_LIMITS = {
+    "school": 19,
+    "iti":    25,
+    "diploma": 25,
+    "ug":     30,
+    "pg":     35,
+    "phd":    40,
+}
+
+
 def is_eligible(user: dict, scheme: pd.Series) -> dict:
     """
     Check if a user is eligible for a scheme.
@@ -29,6 +40,20 @@ def is_eligible(user: dict, scheme: pd.Series) -> dict:
     matched = []
     total_criteria = 0
     passed_criteria = 0
+
+    # ── Age / Education-level bracket ──────────────
+    # Use scheme's education_level to infer a realistic age cap.
+    user_age = user.get("age")
+    scheme_edu_raw = scheme.get("education_level")
+
+    if pd.notna(scheme_edu_raw) and user_age is not None:
+        scheme_edu_key = str(scheme_edu_raw).strip().lower()
+        age_cap = _EDU_AGE_LIMITS.get(scheme_edu_key)
+        if age_cap and user_age > age_cap:
+            reasons.append(
+                f"Age {user_age} is too high for a {scheme_edu_raw}-level scheme "
+                f"(typically for students up to {age_cap} years old)"
+            )
 
     # ── Income ─────────────────────────────────────
 
@@ -64,6 +89,7 @@ def is_eligible(user: dict, scheme: pd.Series) -> dict:
                     f"Scheme requires gender: {scheme_gender}, you are: {user['gender']}"
                 )
         else:
+            # Gender not provided — give partial credit (don't reject outright)
             passed_criteria += 0.5
 
     # ── Category / Caste ───────────────────────────
@@ -190,4 +216,4 @@ def is_eligible(user: dict, scheme: pd.Series) -> dict:
         "match_score": match_score,
         "rejection_reasons": reasons,
         "matched_criteria": matched,
-    }
+    }

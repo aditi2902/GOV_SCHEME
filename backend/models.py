@@ -102,6 +102,7 @@ class SchemeSummary(BaseModel):
     match_score: float = 0
     tags: str = ""
     details_snippet: str = ""
+    portal_url: Optional[str] = None
 
 
 # ── Full Analysis Response ─────────────────────────────
@@ -143,6 +144,7 @@ class SchemeDetail(BaseModel):
     benefit_amount: Optional[float] = None
     state: Optional[str] = None
     gender: Optional[str] = None
+    portal_url: Optional[str] = None
 
 
 # ── Stats ──────────────────────────────────────────────

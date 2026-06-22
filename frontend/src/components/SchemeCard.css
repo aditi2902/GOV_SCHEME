@@ -1,3 +1,29 @@
+/* Viewed badge */
+.scheme-viewed-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 0.7rem;
+  font-weight: 700;
+  color: var(--accent-green);
+  background: rgba(0, 212, 170, 0.12);
+  border: 1px solid rgba(0, 212, 170, 0.25);
+  border-radius: var(--radius-full);
+  padding: 3px 10px;
+  margin-bottom: 6px;
+  width: fit-content;
+  letter-spacing: 0.3px;
+}
+
+/* Viewed card state */
+.scheme-card--viewed {
+  border-color: rgba(0, 212, 170, 0.2) !important;
+}
+.scheme-card--viewed:hover {
+  border-color: rgba(0, 212, 170, 0.4) !important;
+  box-shadow: 0 0 24px rgba(0, 212, 170, 0.1) !important;
+}
+
 .scheme-card {
   padding: 24px;
   cursor: pointer;

@@ -1,0 +1,414 @@
+/* ═══════════════════════════════════════════════
+   Benefits Analysis Dashboard
+   ═══════════════════════════════════════════════ */
+
+.benefits-page {
+  min-height: 100vh;
+  padding-top: 84px;
+  padding-bottom: 80px;
+}
+
+.results-back {
+  margin-bottom: 24px;
+}
+
+/* ── Hero ───────────────────────────── */
+
+.benefits-hero {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 16px;
+  margin-bottom: 32px;
+}
+
+.benefits-subtitle {
+  font-size: 1rem;
+  color: var(--text-secondary);
+  margin-top: 8px;
+}
+
+/* ── Summary Block ──────────────────── */
+
+.benefits-summary {
+  display: grid;
+  grid-template-columns: 1fr 2fr;
+  gap: 20px;
+  margin-bottom: 24px;
+}
+
+/* Capture Rate Card */
+.capture-card {
+  padding: 28px 24px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 16px;
+  text-align: center;
+}
+
+.capture-gauge {
+  position: relative;
+  width: 120px;
+  height: 120px;
+}
+
+.gauge-svg {
+  width: 100%;
+  height: 100%;
+}
+
+.gauge-track {
+  fill: none;
+  stroke: rgba(255, 255, 255, 0.06);
+  stroke-width: 10;
+}
+
+.gauge-fill {
+  fill: none;
+  stroke: url(#gaugeGrad);
+  stroke-width: 10;
+  stroke-linecap: round;
+  transition: stroke-dasharray 1s ease;
+  stroke: var(--primary-light);
+}
+
+.gauge-center {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+}
+
+.gauge-value {
+  font-family: var(--font-display);
+  font-size: 1.5rem;
+  font-weight: 800;
+  color: var(--text-primary);
+  line-height: 1;
+}
+
+.gauge-label {
+  font-size: 0.65rem;
+  color: var(--text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.capture-info h3 {
+  margin-bottom: 6px;
+}
+
+.capture-info p {
+  font-size: 0.875rem;
+  color: var(--text-secondary);
+  line-height: 1.6;
+}
+
+.capture-info strong {
+  color: var(--text-primary);
+}
+
+/* Stats */
+.benefits-stats {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.bstat-card {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  padding: 16px 20px;
+  flex: 1;
+}
+
+.bstat--green { border-left: 3px solid var(--accent-green); }
+.bstat--warn  { border-left: 3px solid var(--accent); }
+.bstat--primary { border-left: 3px solid var(--primary-light); }
+
+.bstat-icon {
+  font-size: 1.75rem;
+  flex-shrink: 0;
+}
+.bstat--green .bstat-icon { color: var(--accent-green); }
+.bstat--warn  .bstat-icon { color: var(--accent); }
+.bstat--primary .bstat-icon { color: var(--primary-light); }
+
+.bstat-value {
+  font-family: var(--font-display);
+  font-size: 1.5rem;
+  font-weight: 800;
+  color: var(--text-primary);
+  display: block;
+  line-height: 1.2;
+}
+
+.bstat-label {
+  font-size: 0.75rem;
+  color: var(--text-muted);
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.4px;
+  display: block;
+}
+
+.bstat-sub {
+  font-size: 0.75rem;
+  color: var(--text-muted);
+  display: block;
+}
+
+/* ── Missed Alert ────────────────────── */
+
+.missed-alert {
+  display: flex;
+  align-items: flex-start;
+  gap: 16px;
+  padding: 20px 24px;
+  margin-bottom: 24px;
+  border-left: 4px solid var(--accent);
+  background: rgba(255, 179, 71, 0.04);
+}
+
+.missed-alert-icon {
+  font-size: 1.75rem;
+  color: var(--accent);
+  flex-shrink: 0;
+  margin-top: 2px;
+}
+
+.missed-alert p {
+  font-size: 0.9rem;
+  color: var(--text-secondary);
+  line-height: 1.6;
+  margin-top: 6px;
+}
+
+.missed-alert strong {
+  color: var(--text-primary);
+}
+
+/* ── Tabs ────────────────────────────── */
+
+.benefits-tabs {
+  display: flex;
+  gap: 8px;
+  margin-bottom: 20px;
+}
+
+.benefits-tab {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 20px;
+  font-family: var(--font-sans);
+  font-size: 0.9rem;
+  font-weight: 600;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  background: var(--bg-card);
+  color: var(--text-secondary);
+  cursor: pointer;
+  transition: all var(--transition-base);
+}
+
+.benefits-tab:hover {
+  border-color: var(--border-hover);
+  color: var(--text-primary);
+}
+
+.benefits-tab--active {
+  background: rgba(108, 99, 255, 0.12);
+  border-color: var(--primary);
+  color: var(--primary-light);
+}
+
+.tab-count {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 22px;
+  height: 22px;
+  font-size: 0.7rem;
+  font-weight: 700;
+  border-radius: 50%;
+}
+
+.tab-count--warn {
+  background: rgba(255, 179, 71, 0.15);
+  color: var(--accent);
+}
+
+.tab-count--green {
+  background: rgba(0, 212, 170, 0.15);
+  color: var(--accent-green);
+}
+
+/* ── Scheme List ─────────────────────── */
+
+.benefits-list {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.benefit-row {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  padding: 18px 22px;
+  transition: all var(--transition-base);
+}
+
+.benefit-row--viewed {
+  border-color: rgba(0, 212, 170, 0.15);
+  background: rgba(0, 212, 170, 0.02);
+}
+
+.benefit-row-rank {
+  font-family: var(--font-display);
+  font-size: 0.875rem;
+  font-weight: 700;
+  color: var(--text-muted);
+  width: 32px;
+  flex-shrink: 0;
+}
+
+.benefit-row-info {
+  flex: 1;
+  min-width: 0;
+}
+
+.benefit-row-name {
+  font-family: var(--font-display);
+  font-size: 0.975rem;
+  font-weight: 600;
+  color: var(--text-primary);
+  line-height: 1.3;
+  margin-bottom: 6px;
+}
+
+.benefit-row-meta {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px;
+  margin-bottom: 6px;
+}
+
+.match-pct {
+  font-size: 0.72rem;
+  color: var(--text-muted);
+  font-weight: 500;
+}
+
+.benefit-row-desc {
+  font-size: 0.813rem;
+  color: var(--text-muted);
+  line-height: 1.5;
+}
+
+.benefit-row-right {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 10px;
+  flex-shrink: 0;
+}
+
+.benefit-row-amount {
+  display: flex;
+  align-items: center;
+  gap: 3px;
+  font-family: var(--font-display);
+  font-size: 1.1rem;
+  font-weight: 700;
+  color: var(--accent-green);
+}
+
+.benefit-row-amount small {
+  font-size: 0.75rem;
+  color: var(--text-muted);
+  font-weight: 400;
+}
+
+.benefit-row-actions {
+  display: flex;
+  gap: 8px;
+}
+
+/* ── Empty States ────────────────────── */
+
+.benefits-empty {
+  text-align: center;
+  padding: 64px 32px;
+  margin-top: 32px;
+}
+
+.empty-icon {
+  font-size: 3.5rem;
+  color: var(--text-muted);
+  margin-bottom: 16px;
+}
+
+.benefits-empty h2 {
+  margin-bottom: 12px;
+}
+
+.benefits-empty p {
+  color: var(--text-secondary);
+  font-size: 1rem;
+}
+
+.benefits-tab-empty {
+  padding: 40px;
+  text-align: center;
+  color: var(--text-secondary);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 12px;
+}
+
+.empty-icon-sm {
+  font-size: 2.5rem;
+  color: var(--accent-green);
+}
+
+/* ── Responsive ─────────────────────── */
+
+@media (max-width: 1024px) {
+  .benefits-summary {
+    grid-template-columns: 1fr;
+  }
+  .capture-card {
+    flex-direction: row;
+    text-align: left;
+  }
+  .benefits-stats {
+    flex-direction: row;
+  }
+}
+
+@media (max-width: 768px) {
+  .benefits-stats {
+    flex-direction: column;
+  }
+  .benefit-row {
+    flex-wrap: wrap;
+  }
+  .benefit-row-right {
+    width: 100%;
+    flex-direction: row;
+    align-items: center;
+    justify-content: space-between;
+  }
+  .benefits-hero {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+}

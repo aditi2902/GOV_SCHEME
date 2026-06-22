@@ -94,33 +94,96 @@
   border-radius: var(--radius-full);
 }
 
-/* ── Benefit Alert ─────────────────────────────────── */
+/* ── Benefit Gap Card ──────────────────────────────── */
 
-.benefit-alert {
+.benefit-gap-card {
+  padding: 24px;
+  margin-bottom: 32px;
+  border-left: 4px solid var(--primary);
+}
+
+.benefit-gap-header {
   display: flex;
   align-items: flex-start;
   gap: 16px;
-  padding: 24px;
-  margin-bottom: 32px;
-  border-left: 4px solid var(--accent);
+  margin-bottom: 20px;
 }
 
-.benefit-alert-icon {
+.benefit-gap-icon {
   font-size: 1.5rem;
-  color: var(--accent);
+  color: var(--primary-light);
   flex-shrink: 0;
   margin-top: 2px;
 }
 
-.benefit-alert p {
-  font-size: 0.938rem;
+.benefit-gap-header > div {
+  flex: 1;
+}
+
+.benefit-gap-header h4 {
+  margin-bottom: 4px;
+}
+
+.benefit-gap-header p {
+  font-size: 0.875rem;
   color: var(--text-secondary);
-  line-height: 1.6;
-  margin-top: 8px;
 }
-.benefit-alert strong {
+
+.benefit-gap-stats {
+  display: flex;
+  gap: 16px;
+  flex-wrap: wrap;
+}
+
+.gap-stat {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex: 1;
+  min-width: 160px;
+  padding: 14px 18px;
+  border-radius: var(--radius-md);
+  border: 1px solid var(--border);
+}
+
+.gap-stat--green {
+  background: rgba(0, 212, 170, 0.06);
+  border-color: rgba(0, 212, 170, 0.15);
+}
+.gap-stat--warn {
+  background: rgba(255, 179, 71, 0.06);
+  border-color: rgba(255, 179, 71, 0.15);
+}
+.gap-stat--primary {
+  background: rgba(108, 99, 255, 0.06);
+  border-color: rgba(108, 99, 255, 0.15);
+}
+
+.gap-stat-icon {
+  font-size: 1.5rem;
+  flex-shrink: 0;
+}
+.gap-stat--green .gap-stat-icon { color: var(--accent-green); }
+.gap-stat--warn .gap-stat-icon { color: var(--accent); }
+.gap-stat--primary .gap-stat-icon { color: var(--primary-light); }
+
+.gap-stat-value {
+  font-family: var(--font-display);
+  font-size: 1.35rem;
+  font-weight: 800;
   color: var(--text-primary);
+  display: block;
+  line-height: 1.2;
 }
+
+.gap-stat-label {
+  font-size: 0.7rem;
+  color: var(--text-muted);
+  font-weight: 500;
+  text-transform: uppercase;
+  letter-spacing: 0.4px;
+}
+
 
 /* ── Sections ──────────────────────────────────────── */
 

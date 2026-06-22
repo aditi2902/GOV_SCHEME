@@ -3,16 +3,19 @@ import { useNavigate, Link } from 'react-router-dom';
 import {
   HiOutlineCurrencyRupee, HiOutlineAcademicCap, HiOutlineDocumentText,
   HiOutlineChartBar, HiOutlineExclamation, HiOutlineArrowLeft,
-  HiOutlineLocationMarker, HiOutlineUser, HiOutlineBriefcase
+  HiOutlineLocationMarker, HiOutlineUser, HiOutlineBriefcase,
+  HiOutlineCheckCircle, HiOutlineSparkles
 } from 'react-icons/hi';
 import SchemeCard from '../components/SchemeCard';
 import ReadinessGauge from '../components/ReadinessGauge';
+import SchemeDetailModal from '../components/SchemeDetailModal';
 import './Results.css';
 
 export default function Results() {
   const [data, setData] = useState(null);
-  const [selectedScheme, setSelectedScheme] = useState(null);
+  const [activeModal, setActiveModal] = useState(null); // slug of scheme to show in modal
   const [showGuidance, setShowGuidance] = useState(false);
+  const [viewedSlugs, setViewedSlugs] = useState([]);
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -22,7 +25,15 @@ export default function Results() {
       return;
     }
     setData(JSON.parse(raw));
+    // Load viewed slugs
+    setViewedSlugs(JSON.parse(localStorage.getItem('viewed_schemes') || '[]'));
   }, [navigate]);
+
+  // Refresh viewed slugs when modal closes
+  const handleModalClose = () => {
+    setActiveModal(null);
+    setViewedSlugs(JSON.parse(localStorage.getItem('viewed_schemes') || '[]'));
+  };
 
   if (!data) return null;
 
@@ -36,6 +47,11 @@ export default function Results() {
     return `₹${a}`;
   };
 
+  // Compute benefit gap stats
+  const viewedSchemes = eligible_schemes.filter(s => viewedSlugs.includes(s.slug));
+  const missedSchemes = eligible_schemes.filter(s => !viewedSlugs.includes(s.slug));
+  const missedBenefit = missedSchemes.reduce((sum, s) => sum + (s.benefit_amount || 0), 0);
+
   return (
     <div className="results-page">
       <div className="container">
@@ -44,7 +60,38 @@ export default function Results() {
           <HiOutlineArrowLeft /> Back to Profile
         </button>
 
-        {/* Header Stats */}
+        {data.insufficient_data ? (
+          <div className="insufficient-data-card glass-card animate-fadeInUp">
+            <div style={{ display: 'flex', alignItems: 'center', gap: '16px', marginBottom: '16px', color: 'var(--accent)' }}>
+              <HiOutlineExclamation style={{ fontSize: '2rem' }} />
+              <h2 className="heading-md" style={{ margin: 0 }}>Insufficient Information</h2>
+            </div>
+            <p style={{ color: 'var(--text-secondary)', fontSize: '1.05rem', lineHeight: '1.6', marginBottom: '24px' }}>
+              {data.error_message}
+            </p>
+            <div style={{ background: 'rgba(255, 107, 107, 0.1)', padding: '16px', borderRadius: '8px', border: '1px solid rgba(255, 107, 107, 0.2)' }}>
+              <h4 style={{ marginBottom: '8px', color: 'var(--text-primary)' }}>What we understood from your input:</h4>
+              <ul style={{ listStyle: 'none', padding: 0, margin: 0, color: 'var(--text-secondary)' }}>
+                {Object.entries(profile).filter(([_, v]) => v !== null && v !== false).length > 0 ? (
+                  Object.entries(profile)
+                    .filter(([_, v]) => v !== null && v !== false)
+                    .map(([k, v]) => (
+                      <li key={k} style={{ marginBottom: '4px' }}>
+                        <strong style={{ textTransform: 'capitalize' }}>{k.replace('_', ' ')}:</strong> {v}
+                      </li>
+                    ))
+                ) : (
+                  <li><em>No usable profile details found.</em></li>
+                )}
+              </ul>
+            </div>
+            <button className="btn btn-primary" onClick={() => navigate('/analyze')} style={{ marginTop: '24px' }}>
+              Try Again
+            </button>
+          </div>
+        ) : (
+          <>
+            {/* Header Stats */}
         <div className="results-hero animate-fadeInUp">
           <div className="results-hero-left">
             <h1 className="heading-lg">
@@ -127,19 +174,43 @@ export default function Results() {
           </div>
         </div>
 
-        {/* Benefit Gap Alert */}
+        {/* Benefit Gap Analysis */}
         {eligible_count > 0 && (
-          <div className="benefit-alert glass-card animate-fadeInUp stagger-2">
-            <div className="benefit-alert-icon">
-              <HiOutlineExclamation />
+          <div className="benefit-gap-card glass-card animate-fadeInUp stagger-2">
+            <div className="benefit-gap-header">
+              <div className="benefit-gap-icon">
+                <HiOutlineSparkles />
+              </div>
+              <div>
+                <h4 className="heading-sm">Benefit Gap Analysis</h4>
+                <p>Track which schemes you've explored and what you might be missing.</p>
+              </div>
+              <Link to="/benefits" className="btn btn-secondary btn-sm">
+                Full Analysis →
+              </Link>
             </div>
-            <div>
-              <h4 className="heading-sm">Benefit Gap Analysis</h4>
-              <p>
-                You qualify for <strong>{eligible_count} schemes</strong> out of {total_schemes} checked.
-                Your potential annual benefits exceed <strong>{formatAmount(potential_annual_benefit)}</strong>.
-                {eligible_count > 5 && " Most students only utilize 1-2 schemes — don't miss out!"}
-              </p>
+            <div className="benefit-gap-stats">
+              <div className="gap-stat gap-stat--green">
+                <HiOutlineCheckCircle className="gap-stat-icon" />
+                <div>
+                  <span className="gap-stat-value">{viewedSchemes.length}</span>
+                  <span className="gap-stat-label">Schemes Viewed</span>
+                </div>
+              </div>
+              <div className="gap-stat gap-stat--warn">
+                <HiOutlineExclamation className="gap-stat-icon" />
+                <div>
+                  <span className="gap-stat-value">{missedSchemes.length}</span>
+                  <span className="gap-stat-label">Not Yet Explored</span>
+                </div>
+              </div>
+              <div className="gap-stat gap-stat--primary">
+                <HiOutlineCurrencyRupee className="gap-stat-icon" />
+                <div>
+                  <span className="gap-stat-value">{formatAmount(missedBenefit)}</span>
+                  <span className="gap-stat-label">Benefits Unclaimed</span>
+                </div>
+              </div>
             </div>
           </div>
         )}
@@ -157,7 +228,7 @@ export default function Results() {
                   key={scheme.slug || i}
                   scheme={scheme}
                   rank={i + 1}
-                  onClick={() => setSelectedScheme(selectedScheme?.slug === scheme.slug ? null : scheme)}
+                  onViewDetails={(slug) => setActiveModal(slug)}
                 />
               ))}
             </div>
@@ -245,7 +316,17 @@ export default function Results() {
           <p>Ask our AI assistant anything — eligibility, documents, application process.</p>
           <Link to="/chat" className="btn btn-primary">Ask AI Assistant →</Link>
         </div>
+          </>
+        )}
       </div>
+
+      {/* Scheme Detail Modal */}
+      {activeModal && (
+        <SchemeDetailModal
+          slug={activeModal}
+          onClose={handleModalClose}
+        />
+      )}
     </div>
   );
 }
