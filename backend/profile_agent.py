@@ -42,6 +42,7 @@ Fields:
 - category (string or null) — one of: "General", "OBC", "SC", "ST", "EWS"
 - disability (boolean) — default false
 - minority (boolean) — default false
+- marital_status (string or null) — one of: "single", "married", "widow", "divorced", or null if not mentioned
 
 Important:
 - Convert "lakh" to actual number (e.g. "4 lakh" = 400000)
@@ -78,6 +79,7 @@ User Description:
         "category": None,
         "disability": False,
         "minority": False,
+        "marital_status": None,
     }
 
     for key, default in defaults.items():

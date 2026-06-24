@@ -34,6 +34,10 @@ const GENDERS = ['Male', 'Female', 'Other'];
 
 const EDUCATION_LEVELS = ['School', 'ITI', 'Diploma', 'UG', 'PG', 'PhD', 'Other'];
 
+const MARITAL_STATUSES = ['Single / Unmarried', 'Married', 'Widow / Widower', 'Divorced'];
+const SIBLINGS_OPTIONS = ['Only Child', '1 Sibling', '2+ Siblings'];
+const INSTITUTION_TYPES = ['Govt / Aided', 'Private', 'Other'];
+
 // Show course only for these levels
 const COURSE_REQUIRED_FOR = ['ITI', 'Diploma', 'UG', 'PG', 'PhD'];
 
@@ -125,6 +129,9 @@ const INITIAL_FORM = {
   year_of_study: '',
   disability: false,
   minority: false,
+  marital_status: '',
+  siblings: '',
+  institution_type: '',
 };
 
 export default function Analyze() {
@@ -194,6 +201,11 @@ export default function Analyze() {
     year_of_study: form.year_of_study ? parseInt(form.year_of_study) : null,
     disability: form.disability,
     minority: form.minority,
+    marital_status: form.marital_status
+      ? form.marital_status.toLowerCase().replace(' / ', '/').split('/')[0].trim()
+      : null,
+    siblings: form.siblings || null,
+    institution_type: form.institution_type || null,
   });
 
   // ── Submit ───────────────────────────────────────────
@@ -301,6 +313,42 @@ export default function Analyze() {
           </div>
         </label>
       </div>
+
+      <div className="ff-grid-2">
+        <FormField
+          label="Marital Status"
+          hint="Optional. Matches widow/single girl schemes."
+        >
+          <select
+            id="marital-status-input"
+            className="input ff-select"
+            value={form.marital_status}
+            onChange={(e) => set('marital_status', e.target.value)}
+          >
+            <option value="">Select (optional)</option>
+            {MARITAL_STATUSES.map((m) => (
+              <option key={m} value={m}>{m}</option>
+            ))}
+          </select>
+        </FormField>
+
+        <FormField
+          label="Siblings"
+          hint="Optional. Matches 'Only Child' schemes."
+        >
+          <select
+            id="siblings-input"
+            className="input ff-select"
+            value={form.siblings}
+            onChange={(e) => set('siblings', e.target.value)}
+          >
+            <option value="">Select (optional)</option>
+            {SIBLINGS_OPTIONS.map((o) => (
+              <option key={o} value={o}>{o}</option>
+            ))}
+          </select>
+        </FormField>
+      </div>
     </div>
   );
 
@@ -364,7 +412,12 @@ export default function Analyze() {
           <SelectWithOther
             id="education-input"
             value={form.education_level}
-            onChange={(v) => { set('education_level', v); set('course', ''); set('course_other', ''); }}
+            onChange={(v) => { 
+              set('education_level', v); 
+              set('course', ''); 
+              set('course_other', '');
+              if (v === 'School') set('institution_type', '');
+            }}
             options={EDUCATION_LEVELS}
             otherValue={form.education_level_other}
             onOtherChange={(v) => set('education_level_other', v)}
@@ -419,6 +472,25 @@ export default function Analyze() {
             </FormField>
           )}
         </div>
+
+        {form.education_level && form.education_level !== 'School' && (
+          <FormField
+            label="Institution Type"
+            hint="Are you studying in a Government or Private institution?"
+          >
+            <select
+              id="institution-type-input"
+              className="input ff-select"
+              value={form.institution_type}
+              onChange={(e) => set('institution_type', e.target.value)}
+            >
+              <option value="">Select (optional)</option>
+              {INSTITUTION_TYPES.map((o) => (
+                <option key={o} value={o}>{o}</option>
+              ))}
+            </select>
+          </FormField>
+        )}
       </div>
     );
   };
@@ -445,8 +517,11 @@ export default function Analyze() {
           {effCourse && <ReviewCard icon="📚" label="Course" value={effCourse} />}
           {form.cgpa && <ReviewCard icon="📊" label="Score" value={`${form.cgpa}${form.cgpa > 10 ? '%' : ' CGPA'}`} />}
           {form.year_of_study && <ReviewCard icon="📅" label="Year of Study" value={`Year ${form.year_of_study}`} />}
+          {form.institution_type && <ReviewCard icon="🏛️" label="Institution" value={form.institution_type} />}
           {form.disability && <ReviewCard icon="♿" label="PwD" value="Yes" highlight />}
           {form.minority && <ReviewCard icon="🌙" label="Minority" value="Yes" highlight />}
+          {form.marital_status && <ReviewCard icon="💍" label="Marital Status" value={form.marital_status} />}
+          {form.siblings && <ReviewCard icon="👨‍👩‍👧‍👦" label="Siblings" value={form.siblings} />}
         </div>
 
         <p className="review-note">

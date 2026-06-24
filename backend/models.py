@@ -75,6 +75,18 @@ class UserProfileForm(BaseModel):
 
     disability: bool = Field(False, description="Person with disability (PwD)")
     minority: bool = Field(False, description="Minority community")
+    marital_status: Optional[str] = Field(
+        None,
+        description="Marital status: 'single', 'married', 'widow', 'divorced'"
+    )
+    siblings: Optional[str] = Field(
+        None,
+        description="Number of siblings: 'Only Child', '1 Sibling', '2+ Siblings'"
+    )
+    institution_type: Optional[str] = Field(
+        None,
+        description="Type of institution: 'Govt / Aided', 'Private', 'Other'"
+    )
 
     @model_validator(mode="after")
     def resolve_other_fields(self):
@@ -108,6 +120,9 @@ class UserProfile(BaseModel):
     category: Optional[str] = None
     disability: bool = False
     minority: bool = False
+    marital_status: Optional[str] = None
+    siblings: Optional[str] = None
+    institution_type: Optional[str] = None
 
 
 # ── Eligibility Result ─────────────────────────────────

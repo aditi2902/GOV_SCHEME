@@ -16,6 +16,7 @@ export default function Results() {
   const [activeModal, setActiveModal] = useState(null); // slug of scheme to show in modal
   const [showGuidance, setShowGuidance] = useState(false);
   const [viewedSlugs, setViewedSlugs] = useState([]);
+  const [filterType, setFilterType] = useState('All'); // 'All', 'Scholarship', 'Internship'
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -217,26 +218,68 @@ export default function Results() {
 
         {/* Eligible Schemes Grid */}
         <section className="results-section animate-fadeInUp stagger-3">
-          <h2 className="heading-md results-section-title">
-            <HiOutlineChartBar /> Top Recommended Schemes
-          </h2>
+          <div className="schemes-header">
+            <h2 className="heading-md results-section-title" style={{ marginBottom: 0 }}>
+              <HiOutlineChartBar /> Top Recommended Schemes
+            </h2>
+            
+            <div className="scheme-type-filters">
+              <button 
+                className={`filter-btn ${filterType === 'All' ? 'active' : ''}`}
+                onClick={() => setFilterType('All')}
+              >
+                All
+              </button>
+              <button 
+                className={`filter-btn ${filterType === 'Scholarship' ? 'active' : ''}`}
+                onClick={() => setFilterType('Scholarship')}
+              >
+                Scholarships
+              </button>
+              <button 
+                className={`filter-btn ${filterType === 'Internship' ? 'active' : ''}`}
+                onClick={() => setFilterType('Internship')}
+              >
+                Internships
+              </button>
+            </div>
+          </div>
 
-          {eligible_schemes.length > 0 ? (
-            <div className="schemes-grid">
-              {eligible_schemes.slice(0, 12).map((scheme, i) => (
-                <SchemeCard
-                  key={scheme.slug || i}
-                  scheme={scheme}
-                  rank={i + 1}
-                  onViewDetails={(slug) => setActiveModal(slug)}
-                />
-              ))}
-            </div>
-          ) : (
-            <div className="no-schemes glass-card">
-              <p>No eligible schemes found. Try broadening your profile description.</p>
-            </div>
-          )}
+          {(() => {
+            const filteredSchemes = eligible_schemes.filter(s => {
+              if (filterType === 'All') return true;
+              const bt = (s.benefit_type || '').toLowerCase();
+              const sn = (s.scheme_name || '').toLowerCase();
+              
+              if (filterType === 'Scholarship') {
+                return bt.includes('scholarship') || sn.includes('scholarship') || 
+                       bt.includes('fellowship') || bt.includes('stipend') || 
+                       (!bt.includes('internship') && !sn.includes('internship')); 
+                       // Default most educational schemes to scholarship tab unless explicitly an internship
+              }
+              if (filterType === 'Internship') {
+                return bt.includes('internship') || sn.includes('internship');
+              }
+              return true;
+            });
+
+            return filteredSchemes.length > 0 ? (
+              <div className="schemes-grid">
+                {filteredSchemes.slice(0, 12).map((scheme, i) => (
+                  <SchemeCard
+                    key={scheme.slug || i}
+                    scheme={scheme}
+                    rank={i + 1}
+                    onViewDetails={(slug) => setActiveModal(slug)}
+                  />
+                ))}
+              </div>
+            ) : (
+              <div className="no-schemes glass-card">
+                <p>No {filterType.toLowerCase()} schemes found matching your profile.</p>
+              </div>
+            );
+          })()}
         </section>
 
         {/* Rejection Reasons */}

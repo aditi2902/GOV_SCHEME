@@ -77,4 +77,16 @@ def score_scheme(row: pd.Series, match_score: float = 100.0) -> float:
         if len(app_text) > 50:
             score += 5  # Well-documented application = easier to apply
 
+    # ── Factor 6: Institutional Penalty ────────────
+    # Penalize schemes meant for institutions (colleges, universities) rather than individuals
+    import re
+    text = (str(row.get('eligibility', '')) + ' ' + str(row.get('details', ''))).lower()
+    inst_pattern = (
+        r'\b(hostel|construction|grant-in-aid|infrastructur|building|renovation|upgradation|equipment)\b.*\b(institution|college|university|school|agency)\b|'
+        r'\b(assistance|grant)\s+(?:provided|given|released)\s+(?:to|for)\s+(?:the\s+)?(?:state|institution|college|university|school|ngo|agency)\b|'
+        r'\bopening\s+and\s+(?:maintenance|running)\b'
+    )
+    if re.search(inst_pattern, text):
+        score -= 50  # Sink to the bottom
+
     return round(score, 2)
