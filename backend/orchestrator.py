@@ -28,25 +28,21 @@ def _get_schemes() -> pd.DataFrame:
     return _df
 
 
-def run_analysis(user_text: str, include_guidance: bool = True) -> dict:
+def run_analysis_with_profile(profile: dict, include_guidance: bool = True) -> dict:
     """
-    Run the full multi-agent analysis pipeline.
+    Run the full multi-agent analysis pipeline with a pre-structured profile.
+    Bypasses the LLM profile-extraction step entirely (used by the form endpoint).
 
     Args:
-        user_text: user's free-text description
+        profile: already-structured user profile dict
         include_guidance: whether to generate LLM guidance (slower)
 
     Returns:
-        Complete analysis result dict
+        Complete analysis result dict (same shape as run_analysis)
     """
-
     df = _get_schemes()
 
-    # ── Agent 1: Profile Extraction ────────────────
-    profile = extract_profile(user_text)
-
-    # ── Completeness Check ─────────────────────────
-    # Require at least 2 of these key fields to proceed
+    # Completeness check — at least 2 key fields must be present
     KEY_FIELDS = ["age", "gender", "education_level", "state", "income", "category"]
     provided = [f for f in KEY_FIELDS if profile.get(f) is not None and profile.get(f) is not False]
 
@@ -64,10 +60,21 @@ def run_analysis(user_text: str, include_guidance: bool = True) -> dict:
             "document_checklist": [],
             "guidance": "",
             "error_message": (
-                "We couldn't find enough information in your description to match schemes accurately. "
-                "Please include at least your age or gender, education level, and state."
+                "Not enough information provided. Please fill in at least your "
+                "age or gender, education level, and state."
             ),
         }
+
+    # Delegate to the shared pipeline (skip profile extraction)
+    return _run_pipeline(profile, df, include_guidance)
+
+
+def _run_pipeline(profile: dict, df, include_guidance: bool) -> dict:
+    """
+    Shared eligibility matching pipeline — called by both run_analysis
+    (text input) and run_analysis_with_profile (form input).
+    """
+    from collections import Counter
 
     # ── Agent 2: Eligibility Check ─────────────────
     eligibility_results = []
@@ -144,8 +151,6 @@ def run_analysis(user_text: str, include_guidance: bool = True) -> dict:
     for r in ineligible:
         all_reasons.extend(r["rejection_reasons"])
 
-    # Count and rank rejection reasons
-    from collections import Counter
     reason_counts = Counter(all_reasons)
     top_reasons = [
         reason for reason, _ in reason_counts.most_common(5)
@@ -175,6 +180,50 @@ def run_analysis(user_text: str, include_guidance: bool = True) -> dict:
         "document_checklist": doc_checklists,
         "guidance": guidance_text,
     }
+
+
+def run_analysis(user_text: str, include_guidance: bool = True) -> dict:
+    """
+    Run the full multi-agent analysis pipeline.
+
+    Args:
+        user_text: user's free-text description
+        include_guidance: whether to generate LLM guidance (slower)
+
+    Returns:
+        Complete analysis result dict
+    """
+
+    df = _get_schemes()
+
+    # ── Agent 1: Profile Extraction ────────────────
+    profile = extract_profile(user_text)
+
+    # ── Completeness Check ─────────────────────────
+    # Require at least 2 of these key fields to proceed
+    KEY_FIELDS = ["age", "gender", "education_level", "state", "income", "category"]
+    provided = [f for f in KEY_FIELDS if profile.get(f) is not None and profile.get(f) is not False]
+
+    if len(provided) < 2:
+        return {
+            "profile": profile,
+            "insufficient_data": True,
+            "missing_fields": [f for f in KEY_FIELDS if f not in provided],
+            "total_schemes": len(df),
+            "eligible_count": 0,
+            "potential_annual_benefit": 0,
+            "readiness_score": 0,
+            "eligible_schemes": [],
+            "top_rejection_reasons": [],
+            "document_checklist": [],
+            "guidance": "",
+            "error_message": (
+                "We couldn't find enough information in your description to match schemes accurately. "
+                "Please include at least your age or gender, education level, and state."
+            ),
+        }
+
+    return _run_pipeline(profile, df, include_guidance)
 
 
 def get_scheme_detail(slug: str) -> dict | None:

@@ -10,6 +10,7 @@ Returns not just pass/fail but:
 """
 
 import pandas as pd
+import re
 
 
 # Education level → typical max age for schemes targeting that level
@@ -21,6 +22,27 @@ _EDU_AGE_LIMITS = {
     "pg":     35,
     "phd":    40,
 }
+
+# Education hierarchy for progressive matching (higher rank = higher education)
+EDUCATION_RANK = {
+    "school": 1,
+    "iti": 2,
+    "diploma": 3,
+    "ug": 4,
+    "pg": 5,
+    "phd": 6,
+}
+
+# Keyword patterns that signal a minimum education level is required
+# Each entry: (regex_pattern, minimum_education_level_key)
+_EDU_KEYWORD_GUARDS = [
+    # PhD / Doctoral level
+    (r'\bph\.?d\.?\b|\bdoctoral\b|\bpostdoctoral\b|\bpost-doctoral\b|\bd\.?sc\.?\b', 'phd'),
+    # Medical degrees implying PhD level
+    (r'\bm\.?d\.\b|\bm\.?s\.\b.*\bdegree\b|\bm\.?d\.\s*/\s*m\.?s', 'phd'),
+    # PG level
+    (r'\bpostgraduate\b|\bpost.graduate\b|\bm\.tech\b|\bm\.?e\.?\b|\bmba\b|\bmca\b|\bm\.?sc\.?\b|\bm\.?a\.?\b|\bm\.?com\.?\b', 'pg'),
+]
 
 
 def is_eligible(user: dict, scheme: pd.Series) -> dict:
@@ -40,6 +62,25 @@ def is_eligible(user: dict, scheme: pd.Series) -> dict:
     matched = []
     total_criteria = 0
     passed_criteria = 0
+
+    # ── Free-text Education Keyword Guard ─────────────
+    # When the structured education_level column is missing/null, scan the
+    # free-text eligibility field for PhD/PG keywords to catch schemes where
+    # the degree requirement is only written in the description.
+    if pd.isna(scheme.get("education_level")) and pd.notna(scheme.get("eligibility")):
+        eligibility_text = str(scheme["eligibility"]).lower()
+        user_edu_key = str(user.get("education_level", "") or "").strip().lower()
+        user_edu_rank = EDUCATION_RANK.get(user_edu_key, 0)
+
+        for pattern, required_level in _EDU_KEYWORD_GUARDS:
+            if re.search(pattern, eligibility_text, re.IGNORECASE):
+                required_rank = EDUCATION_RANK.get(required_level, 0)
+                if user_edu_rank < required_rank:
+                    reasons.append(
+                        f"This scheme requires a {required_level.upper()} degree; "
+                        f"your education level ({user.get('education_level', 'not specified')}) does not meet this requirement."
+                    )
+                break  # Only apply the highest-level guard found
 
     # ── Age / Education-level bracket ──────────────
     # Use scheme's education_level to infer a realistic age cap.

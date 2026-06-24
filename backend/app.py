@@ -13,11 +13,12 @@ from models import (
     AnalyzeRequest,
     CompareRequest,
     ChatRequest,
+    UserProfileForm,
     AnalysisResponse,
     SchemeDetail,
     StatsResponse,
 )
-from orchestrator import run_analysis, get_scheme_detail, get_stats
+from orchestrator import run_analysis, run_analysis_with_profile, get_scheme_detail, get_stats
 from rag_agent import chat_answer, search_schemes
 from guidance_agent import generate_comparison
 from profile_agent import extract_profile
@@ -73,6 +74,42 @@ async def analyze_quick(req: AnalyzeRequest):
     """
     try:
         result = run_analysis(req.text, include_guidance=False)
+        return result
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+# ── Form-Based Analysis Endpoints ─────────────────────
+
+@app.post("/api/analyze/form")
+async def analyze_form(form: UserProfileForm):
+    """
+    Structured form analysis — bypasses LLM profile extraction.
+    User fills a structured form; profile is passed directly to the
+    eligibility engine for faster, more accurate matching.
+    Includes AI guidance at the end.
+    """
+    try:
+        profile = form.model_dump(
+            exclude={"state_other", "category_other", "education_level_other", "course_other"}
+        )
+        result = run_analysis_with_profile(profile, include_guidance=True)
+        return result
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@app.post("/api/analyze/form/quick")
+async def analyze_form_quick(form: UserProfileForm):
+    """
+    Structured form quick analysis — bypasses LLM profile extraction.
+    No AI guidance (instant result).
+    """
+    try:
+        profile = form.model_dump(
+            exclude={"state_other", "category_other", "education_level_other", "course_other"}
+        )
+        result = run_analysis_with_profile(profile, include_guidance=False)
         return result
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))

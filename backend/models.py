@@ -2,7 +2,7 @@
 Pydantic models for request/response schemas.
 """
 
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, model_validator
 from typing import Optional
 
 
@@ -44,6 +44,53 @@ class ChatRequest(BaseModel):
         None,
         description="Optional user context for personalized answers",
     )
+
+
+class UserProfileForm(BaseModel):
+    """Structured form input — bypasses LLM profile extraction entirely."""
+
+    # ── Compulsory Fields ──────────────────────────────
+    state: str = Field(..., description="Indian state of residence")
+    state_other: Optional[str] = Field(None, description="Write-in if state='Other'")
+
+    income: float = Field(..., ge=0, description="Annual family income in INR")
+
+    category: str = Field(..., description="Caste category")
+    category_other: Optional[str] = Field(None, description="Write-in if category='Other'")
+
+    gender: str = Field(..., description="Gender")
+
+    age: int = Field(..., ge=1, le=120, description="Age in years")
+
+    education_level: str = Field(..., description="Highest education level")
+    education_level_other: Optional[str] = Field(None, description="Write-in if education_level='Other'")
+
+    # ── Optional / Conditional Fields ─────────────────
+    course: Optional[str] = Field(None, description="Field / course of study")
+    course_other: Optional[str] = Field(None, description="Write-in if course='Other'")
+
+    cgpa: Optional[float] = Field(None, ge=0, le=100, description="Academic score (% or CGPA)")
+
+    year_of_study: Optional[int] = Field(None, ge=1, le=10, description="Current year of study")
+
+    disability: bool = Field(False, description="Person with disability (PwD)")
+    minority: bool = Field(False, description="Minority community")
+
+    @model_validator(mode="after")
+    def resolve_other_fields(self):
+        """Substitute 'Other' dropdown values with write-in text."""
+        if self.state == "Other" and self.state_other:
+            self.state = self.state_other
+        if self.category == "Other" and self.category_other:
+            self.category = self.category_other
+        if self.education_level == "Other" and self.education_level_other:
+            self.education_level = self.education_level_other
+        if self.course == "Other" and self.course_other:
+            self.course = self.course_other
+        # Normalize percentage CGPA > 10 to 10-point scale
+        if self.cgpa is not None and self.cgpa > 10:
+            self.cgpa = round(self.cgpa / 10, 2)
+        return self
 
 
 # ── Profile Model ─────────────────────────────────────

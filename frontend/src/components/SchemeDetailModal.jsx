@@ -48,7 +48,9 @@ export default function SchemeDetailModal({ slug, onClose }) {
   const parseList = (text) => {
     if (!text || text === 'nan') return [];
     return text
-      .split(/\n|(?<=\.)(?=\s*[A-Z0-9])/)
+      // Only split on newlines OR on a period that is followed by whitespace then a capital letter
+      // This avoids splitting "Ph.D." or "M.S." because those have no whitespace between period and next char
+      .split(/\n|\.(?=\s+[A-Z])/)
       .map(s => s.trim())
       .filter(s => s.length > 5);
   };

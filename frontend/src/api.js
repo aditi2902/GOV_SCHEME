@@ -1,4 +1,4 @@
-const API_BASE = 'http://localhost:8080/api';
+const API_BASE = 'http://localhost:8000/api';
 
 export async function analyzeProfile(text) {
   const res = await fetch(`${API_BASE}/analyze`, {
@@ -7,6 +7,32 @@ export async function analyzeProfile(text) {
     body: JSON.stringify({ text }),
   });
   if (!res.ok) throw new Error(`API error: ${res.status}`);
+  return res.json();
+}
+
+export async function analyzeForm(formData) {
+  const res = await fetch(`${API_BASE}/analyze/form`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(formData),
+  });
+  if (!res.ok) {
+    const err = await res.json().catch(() => ({}));
+    throw new Error(err.detail || `API error: ${res.status}`);
+  }
+  return res.json();
+}
+
+export async function analyzeFormQuick(formData) {
+  const res = await fetch(`${API_BASE}/analyze/form/quick`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(formData),
+  });
+  if (!res.ok) {
+    const err = await res.json().catch(() => ({}));
+    throw new Error(err.detail || `API error: ${res.status}`);
+  }
   return res.json();
 }
 
