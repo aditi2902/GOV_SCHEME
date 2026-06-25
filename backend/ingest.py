@@ -7,8 +7,8 @@ Run once: python ingest.py
 
 import pandas as pd
 import chromadb
+from chromadb.utils import embedding_functions
 from config import SCHEMES_CSV, CHROMA_DIR, CHROMA_COLLECTION
-
 
 def ingest_schemes():
     """Load scheme data from CSV into ChromaDB."""
@@ -27,8 +27,12 @@ def ingest_schemes():
     except Exception:
         pass
 
+    # Use mpnet-base-v2 which supports 512 tokens and runs locally
+    mpnet_ef = embedding_functions.SentenceTransformerEmbeddingFunction(model_name="all-mpnet-base-v2")
+
     collection = chroma_client.create_collection(
         name=CHROMA_COLLECTION,
+        embedding_function=mpnet_ef,
         metadata={"hnsw:space": "cosine"},
     )
 

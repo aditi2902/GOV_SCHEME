@@ -44,6 +44,10 @@ class ChatRequest(BaseModel):
         None,
         description="Optional user context for personalized answers",
     )
+    eligible_schemes: Optional[list[str]] = Field(
+        None,
+        description="List of scheme names the user is eligible for",
+    )
 
 
 class UserProfileForm(BaseModel):

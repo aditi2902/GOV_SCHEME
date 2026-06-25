@@ -152,6 +152,17 @@ _INSTITUTION_PATTERNS = [
     (r'\bgovernment\s+(?:college|school|institution|university)\b|\bgovt\.?\s+(?:college|school|institution|university)\b|\bstate\s+university\b|\baided\s+(?:college|school|institution)\b', 'gov'),
 ]
 
+# Age patterns -> extract explicit age limits from free text
+_AGE_PATTERNS = [
+    (r'between\s+(\d{1,2})\s+and\s+(\d{1,2})\s+years', 'both'),
+    (r'not\s+less\s+than\s+(\d{1,2}).*?not\s+more\s+than\s+(\d{1,2})', 'both'),
+    (r'from\s+(\d{1,2})\s+to\s+(\d{1,2})\s+years', 'both'),
+    (r'age\s+(?:limit\s+)?(?:is\s+)?(\d{1,2})\s*(?:to|-|and)\s*(\d{1,2})', 'both'),
+    (r'(?:below|maximum\s+age|not\s+more\s+than|under|not\s+exceeding|upper\s+age|up\s+to)\s+(?:is\s+)?(\d{1,2})\s+years', 'max'),
+    (r'age\s+(?:limit\s+)?(?:is\s+)?(\d{1,2})\s+years', 'max'),
+    (r'(?:above|minimum\s+age|not\s+less\s+than|at\s+least)\s+(?:is\s+)?(\d{1,2})\s+years', 'min'),
+]
+
 
 def is_eligible(user: dict, scheme: pd.Series) -> dict:
     """
@@ -175,18 +186,51 @@ def is_eligible(user: dict, scheme: pd.Series) -> dict:
     # This logic has been merged into the main Education Level check below.
 
     # ── Age / Education-level bracket ──────────────
-    # Use scheme's education_level to infer a realistic age cap.
     user_age = user.get("age")
-    scheme_edu_raw = scheme.get("education_level")
+    
+    eligibility_text_raw = str(scheme.get("eligibility", "") or "")
+    details_text_raw = str(scheme.get("details", "") or "")
+    full_text = f"{eligibility_text_raw} {details_text_raw}".lower()
 
-    if pd.notna(scheme_edu_raw) and user_age is not None:
-        scheme_edu_key = str(scheme_edu_raw).strip().lower()
-        age_cap = _EDU_AGE_LIMITS.get(scheme_edu_key)
-        if age_cap and user_age > age_cap:
-            reasons.append(
-                f"Age {user_age} is too high for a {scheme_edu_raw}-level scheme "
-                f"(typically for students up to {age_cap} years old)"
-            )
+    explicit_min = None
+    explicit_max = None
+    
+    for pattern, p_type in _AGE_PATTERNS:
+        m = re.search(pattern, full_text, re.IGNORECASE)
+        if m:
+            if p_type == 'both' and len(m.groups()) >= 2:
+                explicit_min = int(m.group(1))
+                explicit_max = int(m.group(2))
+            elif p_type == 'max' and len(m.groups()) >= 1:
+                explicit_max = int(m.group(1))
+            elif p_type == 'min' and len(m.groups()) >= 1:
+                explicit_min = int(m.group(1))
+            break # take first match
+
+    if explicit_min is not None or explicit_max is not None:
+        total_criteria += 1
+        if user_age is not None:
+            if explicit_min and user_age < explicit_min:
+                reasons.append(f"Scheme minimum age is {explicit_min}, you are {user_age}.")
+            elif explicit_max and user_age > explicit_max:
+                reasons.append(f"Scheme maximum age is {explicit_max}, you are {user_age}.")
+            else:
+                passed_criteria += 1
+                matched.append(f"Age {user_age} satisfies scheme age limits.")
+        else:
+            # Age not provided, give partial credit
+            passed_criteria += 0.5
+    else:
+        # Fallback: Use scheme's education_level to infer a realistic age cap.
+        scheme_edu_raw = scheme.get("education_level")
+        if pd.notna(scheme_edu_raw) and user_age is not None:
+            scheme_edu_key = str(scheme_edu_raw).strip().lower()
+            age_cap = _EDU_AGE_LIMITS.get(scheme_edu_key)
+            if age_cap and user_age > age_cap:
+                reasons.append(
+                    f"Age {user_age} is too high for a {scheme_edu_raw}-level scheme "
+                    f"(typically for students up to {age_cap} years old)"
+                )
 
     # ── Income ─────────────────────────────────────
 

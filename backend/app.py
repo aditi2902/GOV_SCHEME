@@ -143,7 +143,7 @@ async def scheme_detail(slug: str):
 async def chat(req: ChatRequest):
     """RAG-powered Q&A about government schemes."""
     try:
-        answer = chat_answer(req.question, req.user_text)
+        answer = chat_answer(req.question, req.user_text, req.eligible_schemes)
         return {"question": req.question, "answer": answer}
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
