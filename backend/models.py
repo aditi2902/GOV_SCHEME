@@ -6,19 +6,6 @@ from pydantic import BaseModel, Field, model_validator
 from typing import Optional
 
 
-# ── Request Models ─────────────────────────────────────
-
-class AnalyzeRequest(BaseModel):
-    """User's free-text description for full analysis."""
-    text: str = Field(
-        ...,
-        description="User's natural-language description of themselves",
-        min_length=10,
-        examples=[
-            "I am a 20 year old female engineering student from Maharashtra. Family income is 4 lakh."
-        ],
-    )
-
 
 class CompareRequest(BaseModel):
     """Compare two or more schemes by slug."""

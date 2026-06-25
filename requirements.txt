@@ -13,6 +13,12 @@ google-genai
 
 # Vector Store (RAG)
 chromadb
+sentence-transformers
 
 # PDF parsing (for future RAG ingestion)
 pymupdf
+
+# Evaluation (RAGAS)
+ragas
+datasets
+langchain-google-genai

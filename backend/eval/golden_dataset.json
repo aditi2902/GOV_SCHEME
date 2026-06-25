@@ -1,0 +1,127 @@
+[
+  {
+    "category": "factual",
+    "question": "What documents are needed to apply for the Aapki Beti Yojana?",
+    "ground_truth": null
+  },
+  {
+    "category": "factual",
+    "question": "What is the AICTE \u2013 Mitacs Globalink Research Internship (GRI) Scheme and how does it work?",
+    "ground_truth": null
+  },
+  {
+    "category": "factual",
+    "question": "What is the AICTE-Swanath Scholarship Scheme For Students?",
+    "ground_truth": null
+  },
+  {
+    "category": "factual",
+    "question": "How is the Abhinandan Education Loan Subsidy Scheme awarded?",
+    "ground_truth": null
+  },
+  {
+    "category": "factual",
+    "question": "What are the benefits of the SUPER 30 Scheme in Tripura?",
+    "ground_truth": null
+  },
+  {
+    "category": "eligibility",
+    "question": "What is the income limit for the Aaws Bhatta Sahayata Yojana?",
+    "ground_truth": null
+  },
+  {
+    "category": "eligibility",
+    "question": "Who is eligible for the Pre-Matric Scholarship for Backward Class Students in Madhya Pradesh?",
+    "ground_truth": null
+  },
+  {
+    "category": "eligibility",
+    "question": "Can a general category student apply for the AICTE \u2013 Saksham Scholarship Scheme For Specially-Abled Student (Degree)?",
+    "ground_truth": null
+  },
+  {
+    "category": "eligibility",
+    "question": "What is the minimum academic percentage required for the AICTE-INAE Travel Grant Scheme For Engineering Students?",
+    "ground_truth": null
+  },
+  {
+    "category": "eligibility",
+    "question": "Are disability students eligible for the AICTE \u2013 Saksham Scholarship Scheme For Specially-Abled Student (Diploma)?",
+    "ground_truth": null
+  },
+  {
+    "category": "benefits",
+    "question": "How much monthly stipend does the Aaws Bhatta Sahayata Yojana give to students in Bhopal?",
+    "ground_truth": null
+  },
+  {
+    "category": "benefits",
+    "question": "What is the total annual scholarship amount for the AICTE \u2013 Saksham Scholarship Scheme For Specially-Abled Student (Degree)?",
+    "ground_truth": null
+  },
+  {
+    "category": "benefits",
+    "question": "What financial benefits does the Aapki Beti Yojana offer for girls in Class 9 to 12?",
+    "ground_truth": null
+  },
+  {
+    "category": "benefits",
+    "question": "Does the SUPER 30 Scheme cover accommodation fees?",
+    "ground_truth": null
+  },
+  {
+    "category": "benefits",
+    "question": "What is the maximum benefit amount offered by the Abhinandan Education Loan Subsidy Scheme?",
+    "ground_truth": null
+  },
+  {
+    "category": "application",
+    "question": "How do I apply for the Pre-Matric Scholarship for Backward Class Students?",
+    "ground_truth": null
+  },
+  {
+    "category": "application",
+    "question": "What is the application process for the AICTE \u2013 Mitacs Globalink Research Internship (GRI) Scheme?",
+    "ground_truth": null
+  },
+  {
+    "category": "application",
+    "question": "How do I apply for the Aaws Bhatta Sahayata Yojana?",
+    "ground_truth": null
+  },
+  {
+    "category": "application",
+    "question": "Where do I submit the application for the Adi Dravidar and Tribal Welfare Department-Incentive/Award of Prizes?",
+    "ground_truth": null
+  },
+  {
+    "category": "application",
+    "question": "What are the steps to register for the AICTE-Swanath Scholarship Scheme For Students?",
+    "ground_truth": null
+  },
+  {
+    "category": "comparative",
+    "question": "Which scheme gives a higher benefit amount: the AICTE \u2013 Saksham Scholarship Scheme For Specially-Abled Student (Degree) or the Aapki Beti Yojana?",
+    "ground_truth": null
+  },
+  {
+    "category": "comparative",
+    "question": "What is the difference between the AICTE \u2013 Saksham Scholarship Scheme for Degree and Diploma students?",
+    "ground_truth": null
+  },
+  {
+    "category": "comparative",
+    "question": "Which schemes are available for students in Madhya Pradesh?",
+    "ground_truth": null
+  },
+  {
+    "category": "comparative",
+    "question": "Are there any travel grant schemes for engineering students?",
+    "ground_truth": null
+  },
+  {
+    "category": "comparative",
+    "question": "Which schemes are available for children of persons engaged in the cleaning profession?",
+    "ground_truth": null
+  }
+]

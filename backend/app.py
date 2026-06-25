@@ -10,7 +10,6 @@ import uvicorn
 
 from config import HOST, PORT, CORS_ORIGINS
 from models import (
-    AnalyzeRequest,
     CompareRequest,
     ChatRequest,
     UserProfileForm,
@@ -18,10 +17,9 @@ from models import (
     SchemeDetail,
     StatsResponse,
 )
-from orchestrator import run_analysis, run_analysis_with_profile, get_scheme_detail, get_stats
+from orchestrator import run_analysis_with_profile, get_scheme_detail, get_stats
 from rag_agent import chat_answer, search_schemes
 from guidance_agent import generate_comparison
-from profile_agent import extract_profile
 
 
 # ── App Setup ──────────────────────────────────────────
@@ -50,33 +48,6 @@ app.add_middleware(
 @app.get("/api/health")
 async def health():
     return {"status": "ok", "service": "SarkariSahay API"}
-
-
-# ── Main Analysis Endpoint ─────────────────────────────
-
-@app.post("/api/analyze")
-async def analyze(req: AnalyzeRequest):
-    """
-    Full analysis pipeline:
-    User text → Profile → Eligibility → Ranking → Documents → Guidance
-    """
-    try:
-        result = run_analysis(req.text, include_guidance=True)
-        return result
-    except Exception as e:
-        raise HTTPException(status_code=500, detail=str(e))
-
-
-@app.post("/api/analyze/quick")
-async def analyze_quick(req: AnalyzeRequest):
-    """
-    Quick analysis without LLM guidance (faster).
-    """
-    try:
-        result = run_analysis(req.text, include_guidance=False)
-        return result
-    except Exception as e:
-        raise HTTPException(status_code=500, detail=str(e))
 
 
 # ── Form-Based Analysis Endpoints ─────────────────────
@@ -111,17 +82,6 @@ async def analyze_form_quick(form: UserProfileForm):
         )
         result = run_analysis_with_profile(profile, include_guidance=False)
         return result
-    except Exception as e:
-        raise HTTPException(status_code=500, detail=str(e))
-
-
-# ── Profile Extraction ─────────────────────────────────
-
-@app.post("/api/profile")
-async def profile(req: AnalyzeRequest):
-    """Extract structured profile from text."""
-    try:
-        return extract_profile(req.text)
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 
@@ -168,8 +128,6 @@ async def compare(req: CompareRequest):
             )
 
         profile = None
-        if req.user_text:
-            profile = extract_profile(req.user_text)
 
         comparison = generate_comparison(
             profile or {},
