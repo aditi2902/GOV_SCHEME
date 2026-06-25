@@ -30,7 +30,7 @@ const STATES = [
 
 const CATEGORIES = ['General', 'OBC', 'SC', 'ST', 'EWS', 'Other'];
 
-const GENDERS = ['Male', 'Female', 'Other'];
+const GENDERS = ['Male', 'Female', 'Transgender', 'Other'];
 
 const EDUCATION_LEVELS = ['School', 'ITI', 'Diploma', 'UG', 'PG', 'PhD', 'Other'];
 
