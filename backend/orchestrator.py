@@ -95,8 +95,8 @@ def _run_pipeline(profile: dict, df, include_guidance: bool) -> dict:
             match_score=r["match_score"],
         )
 
-    # Sort by score descending
-    eligible.sort(key=lambda x: x["score"], reverse=True)
+    # Sort by match_score first, then by ranking score descending
+    eligible.sort(key=lambda x: (x["match_score"], x["score"]), reverse=True)
 
     # ── Build scheme summaries ─────────────────────
     eligible_schemes = []

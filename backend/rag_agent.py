@@ -5,9 +5,11 @@ Powers the chat Q&A and scheme discovery features.
 """
 
 import chromadb
+import json
 from google import genai
 from chromadb.utils import embedding_functions
 from config import GEMINI_API_KEY, GEMINI_MODEL, CHROMA_DIR, CHROMA_COLLECTION
+from orchestrator import run_analysis_with_profile
 
 client = genai.Client(api_key=GEMINI_API_KEY)
 
@@ -79,26 +81,44 @@ def chat_answer(question: str, user_context: str = None) -> str:
         )
 
     user_info = ""
+    eligible_schemes_text = ""
     if user_context:
-        user_info = f"\n\nUSER CONTEXT:\n{user_context}"
+        try:
+            profile = json.loads(user_context)
+            user_info = f"\n\nUSER PROFILE:\n{json.dumps(profile, indent=2)}"
+            
+            analysis = run_analysis_with_profile(profile, include_guidance=False)
+            eligible_schemes = analysis.get("eligible_schemes", [])
+            
+            if eligible_schemes:
+                top_schemes = eligible_schemes[:5]
+                eligible_schemes_text = "\n\nACTUAL ELIGIBLE SCHEMES FOR THIS USER:\n"
+                for i, s in enumerate(top_schemes):
+                    eligible_schemes_text += f"{i+1}. {s.get('scheme_name')} (Match: {s.get('match_score', 0)}%)\n"
+            else:
+                eligible_schemes_text = "\n\nACTUAL ELIGIBLE SCHEMES FOR THIS USER: None found based on profile.\n"
+        except Exception:
+            user_info = f"\n\nUSER CONTEXT:\n{user_context}"
 
     prompt = f"""
 You are a helpful government scheme advisor for Indian citizens.
 Answer the user's question using the provided scheme information.
 
-RELEVANT SCHEME INFORMATION:
+RELEVANT SCHEME INFORMATION FROM SEMANTIC SEARCH:
 {context_text}
+{eligible_schemes_text}
 {user_info}
 
 USER QUESTION:
 {question}
 
 Instructions:
-- Answer based on the provided scheme information
-- If the information doesn't contain the answer, say so honestly
-- Be specific and cite scheme names when possible
-- Use ₹ for currency amounts
-- Keep the answer concise but complete
+- Answer based on the provided scheme information.
+- If the user asks about their eligible or top schemes, refer to the 'ACTUAL ELIGIBLE SCHEMES FOR THIS USER' section and list them out. Even if their full details are not in the semantic search results, you MUST list their names and match scores as provided.
+- If the information doesn't contain the answer, say so honestly.
+- Be specific and cite scheme names when possible.
+- Use ₹ for currency amounts.
+- Keep the answer concise but complete.
 """
 
     response = client.models.generate_content(

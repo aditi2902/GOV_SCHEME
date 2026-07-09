@@ -58,10 +58,13 @@ class UserProfileForm(BaseModel):
 
     cgpa: Optional[float] = Field(None, ge=0, le=100, description="Academic score (% or CGPA)")
 
-    year_of_study: Optional[int] = Field(None, ge=1, le=10, description="Current year of study")
+    year_of_study: Optional[int] = Field(None, ge=1, le=12, description="Current year of study")
 
     disability: bool = Field(False, description="Person with disability (PwD)")
     minority: bool = Field(False, description="Minority community")
+    community: Optional[str] = Field(None, description="Community: Hindu, Muslim, Parsi, etc.")
+    community_other: Optional[str] = Field(None, description="Write-in if community='Other'")
+    residence_type: Optional[str] = Field(None, description="Residence: Rural or Urban")
     marital_status: Optional[str] = Field(
         None,
         description="Marital status: 'single', 'married', 'widow', 'divorced'"
@@ -86,6 +89,8 @@ class UserProfileForm(BaseModel):
             self.education_level = self.education_level_other
         if self.course == "Other" and self.course_other:
             self.course = self.course_other
+        if self.community == "Other" and self.community_other:
+            self.community = self.community_other
         # Normalize percentage CGPA > 10 to 10-point scale
         if self.cgpa is not None and self.cgpa > 10:
             self.cgpa = round(self.cgpa / 10, 2)
@@ -107,6 +112,8 @@ class UserProfile(BaseModel):
     category: Optional[str] = None
     disability: bool = False
     minority: bool = False
+    community: Optional[str] = None
+    residence_type: Optional[str] = None
     marital_status: Optional[str] = None
     siblings: Optional[str] = None
     institution_type: Optional[str] = None

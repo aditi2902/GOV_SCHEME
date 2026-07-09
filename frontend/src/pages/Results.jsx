@@ -264,16 +264,45 @@ export default function Results() {
             });
 
             return filteredSchemes.length > 0 ? (
-              <div className="schemes-grid">
-                {filteredSchemes.slice(0, 12).map((scheme, i) => (
-                  <SchemeCard
-                    key={scheme.slug || i}
-                    scheme={scheme}
-                    rank={i + 1}
-                    onViewDetails={(slug) => setActiveModal(slug)}
-                  />
-                ))}
-              </div>
+              <>
+                <div className="schemes-grid">
+                  {filteredSchemes.slice(0, 6).map((scheme, i) => (
+                    <SchemeCard
+                      key={scheme.slug || i}
+                      scheme={scheme}
+                      rank={i + 1}
+                      onViewDetails={(slug) => setActiveModal(slug)}
+                    />
+                  ))}
+                </div>
+                {filteredSchemes.length > 6 && (
+                  <div className="rest-schemes-list glass-card" style={{ marginTop: '2rem', padding: '1.5rem', borderRadius: '12px' }}>
+                    <h3 className="heading-sm" style={{ marginBottom: '1rem', color: 'var(--primary)' }}>Other Eligible Schemes</h3>
+                    <ul style={{ listStyle: 'none', padding: 0, margin: 0 }}>
+                      {filteredSchemes.slice(6).map((scheme, i) => (
+                        <li 
+                          key={scheme.slug || i} 
+                          onClick={() => setActiveModal(scheme.slug)}
+                          style={{ 
+                            padding: '0.75rem 0', 
+                            borderBottom: '1px solid rgba(255,255,255,0.05)', 
+                            cursor: 'pointer',
+                            display: 'flex',
+                            gap: '1rem',
+                            alignItems: 'center',
+                            transition: 'color 0.2s'
+                          }}
+                          onMouseEnter={(e) => e.currentTarget.style.color = 'var(--primary)'}
+                          onMouseLeave={(e) => e.currentTarget.style.color = 'inherit'}
+                        >
+                          <span style={{ fontWeight: '600', color: 'rgba(255,255,255,0.5)', minWidth: '24px' }}>{i + 7}.</span> 
+                          <span>{scheme.scheme_name}</span>
+                        </li>
+                      ))}
+                    </ul>
+                  </div>
+                )}
+              </>
             ) : (
               <div className="no-schemes glass-card">
                 <p>No {filterType.toLowerCase()} schemes found matching your profile.</p>

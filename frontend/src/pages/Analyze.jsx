@@ -31,6 +31,8 @@ const STATES = [
 const CATEGORIES = ['General', 'OBC', 'SC', 'ST', 'EWS', 'Other'];
 
 const GENDERS = ['Male', 'Female', 'Transgender', 'Other'];
+const COMMUNITIES = ['Hindu', 'Muslim', 'Christian', 'Sikh', 'Buddhist', 'Jain', 'Parsi', 'Other'];
+const RESIDENCE_TYPES = ['Rural', 'Urban'];
 
 const EDUCATION_LEVELS = ['School', 'ITI', 'Diploma', 'UG', 'PG', 'PhD', 'Other'];
 
@@ -129,6 +131,9 @@ const INITIAL_FORM = {
   year_of_study: '',
   disability: false,
   minority: false,
+  community: '',
+  community_other: '',
+  residence_type: '',
   marital_status: '',
   siblings: '',
   institution_type: '',
@@ -201,6 +206,9 @@ export default function Analyze() {
     year_of_study: form.year_of_study ? parseInt(form.year_of_study) : null,
     disability: form.disability,
     minority: form.minority,
+    community: form.community,
+    community_other: form.community_other || null,
+    residence_type: form.residence_type || null,
     marital_status: form.marital_status
       ? form.marital_status.toLowerCase().replace(' / ', '/').split('/')[0].trim()
       : null,
@@ -273,6 +281,23 @@ export default function Analyze() {
           otherValue={form.category_other}
           onOtherChange={(v) => set('category_other', v)}
           placeholder="Select caste category"
+        />
+      </FormField>
+
+      <FormField label="Community" required={false} hint="Used for minority or community specific schemes (e.g. Muslim, Parsi, Hindu).">
+        <SelectWithOther
+          id="community-input"
+          value={form.community}
+          onChange={(v) => {
+            set('community', v);
+            if (['Muslim', 'Christian', 'Sikh', 'Buddhist', 'Jain', 'Parsi'].includes(v)) {
+              set('minority', true);
+            }
+          }}
+          options={COMMUNITIES}
+          otherValue={form.community_other}
+          onOtherChange={(v) => set('community_other', v)}
+          placeholder="Select community"
         />
       </FormField>
 
@@ -371,6 +396,20 @@ export default function Analyze() {
         />
       </FormField>
 
+      <FormField label="Residence Type" hint="Are you from a Rural or Urban area?">
+        <select
+          id="residence-input"
+          className="input ff-select"
+          value={form.residence_type}
+          onChange={(e) => set('residence_type', e.target.value)}
+        >
+          <option value="">Select (optional)</option>
+          {RESIDENCE_TYPES.map((o) => (
+            <option key={o} value={o}>{o}</option>
+          ))}
+        </select>
+      </FormField>
+
       <FormField
         label="Annual Family Income (₹)"
         required
@@ -416,7 +455,6 @@ export default function Analyze() {
               set('education_level', v); 
               set('course', ''); 
               set('course_other', '');
-              if (v === 'School') set('institution_type', '');
             }}
             options={EDUCATION_LEVELS}
             otherValue={form.education_level_other}
@@ -457,15 +495,18 @@ export default function Analyze() {
             />
           </FormField>
 
-          {showCourse && (
-            <FormField label="Current Year of Study" hint="Optional. Which year are you in?">
+          {(showCourse || form.education_level === 'School') && (
+            <FormField 
+              label={form.education_level === 'School' ? "Standard / Class" : "Current Year of Study"} 
+              hint={form.education_level === 'School' ? "Optional. Which class are you studying in? (1-12)" : "Optional. Which year are you in?"}
+            >
               <input
                 id="year-input"
                 className="input"
                 type="number"
                 min={1}
-                max={10}
-                placeholder="e.g. 2"
+                max={form.education_level === 'School' ? 12 : 10}
+                placeholder={form.education_level === 'School' ? "e.g. 10" : "e.g. 2"}
                 value={form.year_of_study}
                 onChange={(e) => set('year_of_study', e.target.value)}
               />
@@ -473,10 +514,10 @@ export default function Analyze() {
           )}
         </div>
 
-        {form.education_level && form.education_level !== 'School' && (
+        {form.education_level && (
           <FormField
             label="Institution Type"
-            hint="Are you studying in a Government or Private institution?"
+            hint="Are you studying in a Government/Aided or Private institution/school?"
           >
             <select
               id="institution-type-input"
@@ -498,6 +539,7 @@ export default function Analyze() {
   const renderStep4 = () => {
     const effState = form.state === 'Other' ? form.state_other : form.state;
     const effCategory = form.category === 'Other' ? form.category_other : form.category;
+    const effCommunity = form.community === 'Other' ? form.community_other : form.community;
     const effEdu = form.education_level === 'Other' ? form.education_level_other : form.education_level;
     const effCourse = form.course === 'Other' ? form.course_other : form.course;
     return (
@@ -511,7 +553,9 @@ export default function Analyze() {
           <ReviewCard icon="🧑" label="Age" value={form.age} />
           <ReviewCard icon="⚧" label="Gender" value={form.gender} />
           <ReviewCard icon="🏷️" label="Category" value={effCategory} />
+          {effCommunity && <ReviewCard icon="🙏" label="Community" value={effCommunity} />}
           <ReviewCard icon="📍" label="State" value={effState} />
+          {form.residence_type && <ReviewCard icon="🏡" label="Residence" value={form.residence_type} />}
           <ReviewCard icon="💰" label="Annual Income" value={form.income !== '' ? `₹${Number(form.income).toLocaleString('en-IN')}` : null} />
           <ReviewCard icon="🎓" label="Education" value={effEdu} />
           {effCourse && <ReviewCard icon="📚" label="Course" value={effCourse} />}

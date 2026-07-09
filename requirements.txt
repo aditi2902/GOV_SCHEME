@@ -18,7 +18,5 @@ sentence-transformers
 # PDF parsing (for future RAG ingestion)
 pymupdf
 
-# Evaluation (RAGAS)
-ragas
-datasets
+# langchain-google-genai is used by offline enrichment scripts
 langchain-google-genai
