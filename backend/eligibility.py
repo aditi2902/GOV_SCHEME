@@ -227,6 +227,23 @@ def is_eligible(user: dict, scheme: pd.Series) -> dict:
     details_text_raw = str(scheme.get("details", "") or "")
     full_text = f"{eligibility_text_raw} {details_text_raw}".lower().replace('&', 'and')
 
+    # ── Foreign-Nationals-Only Check ───────────────
+    # Some schemes exist to bring foreign students/teachers TO India (e.g. "JRF/RA
+    # for Foreign Nationals"). Users of this platform are Indian residents, so such
+    # schemes are never applicable. Only trigger when the target group is
+    # exclusively foreigners — schemes that merely also admit foreign students
+    # (e.g. "foreign students are exempted from the written test") must not match.
+    scheme_name_lower = str(scheme.get("scheme_name", "") or "").lower()
+    foreigners_only = (
+        re.search(r'\bfor\s+foreign\s+(?:nationals?|students?|citizens?)\b', scheme_name_lower)
+        or re.search(
+            r'target\s+group\s*:?[^.]{0,120}\b(?:from\s+developing\s+countries|foreign\s+nationals?)\b',
+            full_text
+        )
+    )
+    if foreigners_only:
+        reasons.append("Scheme is exclusively for foreign nationals (non-Indian applicants).")
+
     # ── Age Check ─────────────────────────────────
     user_age = user.get("age")
     explicit_min = None
@@ -321,12 +338,16 @@ def is_eligible(user: dict, scheme: pd.Series) -> dict:
     if pd.notna(scheme.get("gender")):
         gender_req = str(scheme["gender"]).strip().lower()
     else:
-        # Check if text mentions restricting to a specific gender
+        # Check if text mentions restricting to a specific gender.
+        # If BOTH genders are mentioned (e.g. "35 years for male candidates and
+        # 40 years for female candidates"), the scheme is open to all.
+        female_mentioned = bool(re.search(r'\bonly\s+girls?\b|\bfor\s+girls?\b|\bgirl\s+student\b|\bwomen\b|\bfemale\b', full_text, re.IGNORECASE))
+        male_mentioned = bool(re.search(r'\bonly\s+boys?\b|\bfor\s+boys?\b|\bmale\b', full_text, re.IGNORECASE))
         if re.search(r'\b(?:transgender|trans\s+person)\b', full_text, re.IGNORECASE):
             gender_req = 'transgender'
-        elif re.search(r'\bonly\s+girls?\b|\bfor\s+girls?\b|\bgirl\s+student\b|\bwomen\b|\bfemale\b', full_text, re.IGNORECASE):
+        elif female_mentioned and not male_mentioned:
             gender_req = 'female'
-        elif re.search(r'\bonly\s+boys?\b|\bfor\s+boys?\b|\bmale\b', full_text, re.IGNORECASE):
+        elif male_mentioned and not female_mentioned:
             gender_req = 'male'
 
     if gender_req:
@@ -344,40 +365,84 @@ def is_eligible(user: dict, scheme: pd.Series) -> dict:
             passed_criteria += 0.5
 
     # ── Category / Caste Check ─────────────────────
+    # Collapse dotted acronyms so "S.C." / "V.J.N.T." read as "sc" / "vjnt".
+    def _collapse_acronyms(t):
+        return re.sub(r'\b(?:[a-z]\.){2,}', lambda m: m.group(0).replace('.', ''), t)
+    cat_text = _collapse_acronyms(full_text)
+    cat_name = _collapse_acronyms(scheme_name_lower)
+
+    # Detection patterns include acronyms AND common spelled-out forms.
+    _CATEGORY_PATTERNS = {
+        # (?<!\.) stops bare "sc"/"st" from matching inside degrees like "M.Sc"/"B.St"
+        r'(?<!\.)\b(?:sc|scheduled\s+caste)\b': 'sc',
+        r'(?<!\.)\b(?:st|scheduled\s+tribe|tribal)\b': 'st',
+        r'\b(?:obc|other\s+backward\s+class(?:es)?)\b': 'obc',
+        r'\b(?:ebc|sebc|economically\s+backward\s+class(?:es)?)\b': 'ebc',
+        r'\b(?:vjnt|sbc|vimukta|nomadic\s+trib|denotified|special\s+backward\s+class(?:es)?)\b': 'vjnt/sbc',
+    }
+
     # Check structured category first, fallback to text matching
     scheme_cats = []
+    category_from_structured = False
     if pd.notna(scheme.get("category")):
         scheme_cats = [
             c.strip().lower()
             for c in str(scheme["category"]).split(",")
         ]
+        category_from_structured = True
     else:
-        _CATEGORY_PATTERNS = {
-            r'\b(?:sc|scheduled\s+caste)\b': 'sc',
-            r'\b(?:st|scheduled\s+tribe|tribal)\b': 'st',
-            r'\b(?:obc|other\s+backward\s+class(?:es)?)\b': 'obc',
-            r'\b(?:ebc|sebc|economically\s+backward\s+class(?:es)?)\b': 'ebc',
-            r'\b(?:vjnt|sbc)\b': 'vjnt/sbc',
-        }
         for pattern, cat_label in _CATEGORY_PATTERNS.items():
-            if re.search(pattern, full_text, re.IGNORECASE):
+            if re.search(pattern, cat_text, re.IGNORECASE):
                 scheme_cats.append(cat_label)
 
     # Check if text explicitly mentions "general" or "open"
     has_general_mention = bool(re.search(r'\b(?:general|open|unreserved|all\s+categories)\b', full_text, re.IGNORECASE))
+    general_allowed = ('general' in scheme_cats) or has_general_mention
+
+    # Strong exclusivity language — only trust a text-derived category as a true
+    # restriction when the scheme is genuinely *reserved* for it. A bare mention
+    # of "SC" (e.g. "SC students get an extra stipend") is NOT an exclusion, and
+    # previously caused General/other users to be wrongly rejected. But "should
+    # belong to <category>" IS a membership requirement, so it counts.
+    _RESERVED_TOKEN = (r'(?:sc|st|obc|ebc|sebc|vjnt|sbc|scheduled\s+caste|scheduled\s+tribe'
+                       r'|backward\s+class(?:es)?|vimukta|nomadic\s+trib|denotified)')
+    exclusive_reserved = bool(re.search(
+        rf'\b(?:only|exclusively|solely|reserved)\b[^.]{{0,50}}\b{_RESERVED_TOKEN}\b'
+        rf'|\b(?:should|must)?\s*belong(?:ing|s)?\s+to\b[^.]{{0,40}}\b{_RESERVED_TOKEN}\b'
+        rf'|\bfor\s+{_RESERVED_TOKEN}\s*/?\s*{_RESERVED_TOKEN}?\s+(?:students?|candidates?|category|girls?|boys?|children)\b',
+        cat_text, re.IGNORECASE
+    ))
+
+    # A reserved category named in the SCHEME TITLE (e.g. "...for VJNT Students",
+    # "SC/ST Scholarship") is itself a strong exclusion signal — such schemes exist
+    # specifically for that category, so a mismatched user should be filtered out.
+    _cat_name_tokens = []
+    for c in scheme_cats:
+        _cat_name_tokens.extend(t for t in c.split('/') if t and t != 'general')
+    name_targets_reserved = any(
+        re.search(rf'\b{re.escape(tok)}\b', cat_name) for tok in _cat_name_tokens
+    )
+
+    # Enforce the category as a hard filter when it's authoritative (structured
+    # column), the text is explicitly exclusive, or the title names the category.
+    category_is_restriction = bool(scheme_cats) and (
+        category_from_structured or exclusive_reserved or name_targets_reserved
+    )
 
     if scheme_cats:
-        total_criteria += 1
         user_cat = user.get("category")
         if user_cat:
             user_cat_lower = user_cat.lower()
             if user_cat_lower == 'general':
-                if has_general_mention:
-                    passed_criteria += 1
-                    matched.append("Category matches: General (open category mentioned)")
-                else:
+                if general_allowed:
+                    matched.append("Category matches: General (open category)")
+                elif category_is_restriction:
                     reasons.append(
-                        f"Scheme appears to target reserved categories ({', '.join(scheme_cats).upper()}); you are General."
+                        f"Scheme is restricted to reserved categories ({', '.join(scheme_cats).upper()}); you are General."
+                    )
+                else:
+                    matched.append(
+                        "Category: reserved categories only mentioned in passing; General treated as eligible"
                     )
             else:
                 is_match = False
@@ -386,14 +451,15 @@ def is_eligible(user: dict, scheme: pd.Series) -> dict:
                         is_match = True
                         break
                 if is_match:
-                    passed_criteria += 1
                     matched.append(f"Category matches: {user_cat}")
-                else:
+                elif category_is_restriction:
                     reasons.append(
                         f"Scheme requires category: {', '.join(scheme_cats).upper()}, you are: {user_cat}"
                     )
-        else:
-            passed_criteria += 0.5
+                else:
+                    matched.append(
+                        "Category: reserved categories only mentioned in passing; treated as eligible"
+                    )
 
     # ── Community Check ────────────────────────────
     # Look for specific communities in text
@@ -471,6 +537,18 @@ def is_eligible(user: dict, scheme: pd.Series) -> dict:
     if allowed_ranks:
         target_ranks = allowed_ranks
         effective_req_level = explicit_levels[0]
+        # Guard against mislabeled structured data: if the column says the scheme
+        # is for School/ITI/Diploma students but the free text clearly requires a
+        # Master's/PhD and never mentions school-level study, trust the text.
+        if (
+            inferred_ranks
+            and max(inferred_ranks) >= EDUCATION_RANK["pg"]
+            and max(allowed_ranks) < EDUCATION_RANK["ug"]
+            and EDUCATION_RANK["school"] not in inferred_ranks
+        ):
+            highest_rank = max(inferred_ranks)
+            target_ranks = {highest_rank}
+            effective_req_level = [k for k, v in EDUCATION_RANK.items() if v == highest_rank][0]
     else:
         # If the inferred text mentions PG or PhD, it is very likely a Master's or Research scheme.
         # We enforce strict checking by only retaining the highest rank.
@@ -512,9 +590,12 @@ def is_eligible(user: dict, scheme: pd.Series) -> dict:
             except: return None
 
         class_regex_group = r'([1-9]|1[0-2]|xii|xi|x|ix|viii|vii|vi|iv|v|iii|ii|i)'
+        # Ordinal-before-word form common in Indian scheme texts: "12th standard", "9th to 12th class"
+        ordinal_group = r'([1-9]|1[0-2])(?:st|nd|rd|th)'
         class_patterns = [
             rf'\b(?:class|std\.?|standard|grade)s?\s+{class_regex_group}\s*(?:to|-|and)\s*{class_regex_group}\b',
-            rf'\b(?:from\s+)?(?:class|std\.?|standard|grade)s?\s+{class_regex_group}\s+to\s+{class_regex_group}\b'
+            rf'\b(?:from\s+)?(?:class|std\.?|standard|grade)s?\s+{class_regex_group}\s+to\s+{class_regex_group}\b',
+            rf'\b{ordinal_group}?\s*(?:to|-|or|and)\s*{ordinal_group}\s+(?:class|std\.?|standard|grade)s?\b'
         ]
         
         found_range = False
@@ -544,6 +625,10 @@ def is_eligible(user: dict, scheme: pd.Series) -> dict:
         if not found_range:
             single_classes = []
             for m in re.finditer(rf'\b(?:class|std\.?|standard|grade)s?\s+{class_regex_group}\b', full_text, re.IGNORECASE):
+                val = parse_class_val(m.group(1))
+                if val: single_classes.append(val)
+            # Ordinal-before-word form: "12th standard", "10th class"
+            for m in re.finditer(rf'\b{ordinal_group}\s+(?:class|std\.?|standard|grade)s?\b', full_text, re.IGNORECASE):
                 val = parse_class_val(m.group(1))
                 if val: single_classes.append(val)
             if single_classes:
@@ -871,7 +956,7 @@ def is_eligible(user: dict, scheme: pd.Series) -> dict:
         ("age", pd.notna(scheme.get("age_min")) or pd.notna(scheme.get("age_max")) or (explicit_min is not None or explicit_max is not None), user.get("age")),
         ("income", pd.notna(scheme.get("income_max")) or income_limit is not None, user.get("income")),
         ("gender", pd.notna(scheme.get("gender")) or gender_req is not None, user.get("gender")),
-        ("category", pd.notna(scheme.get("category")) or len(scheme_cats) > 0, user.get("category")),
+        ("category", category_is_restriction, user.get("category")),
         ("education_level", pd.notna(scheme.get("education_level")) or effective_req_level != "", user.get("education_level")),
         ("course", pd.notna(scheme.get("course")) or course_matched, user.get("course")),
         ("cgpa", pd.notna(scheme.get("cgpa_min")), user.get("cgpa")),
@@ -882,20 +967,27 @@ def is_eligible(user: dict, scheme: pd.Series) -> dict:
         ("disability", disability_required, user.get("disability"))
     ]
 
-    total_weight = 0.0
+    # Score is normalized over the criteria the scheme actually restricts
+    # (its "applicable" criteria), NOT all 12. Otherwise a perfect match on a
+    # scheme that only restricts a few fields could never approach 100%, which
+    # made downstream thresholds (e.g. readiness_score's >=90 cutoff) unreachable.
+    applicable_weight = 0.0
+    applicable_count = 0
     for dim_name, is_restricted, user_val in dimensions:
         if is_restricted:
+            applicable_count += 1
             if user_val is None or user_val == "" or user_val is False:
                 # User did not provide info, gets partial credit (0.5)
-                total_weight += 0.5
+                applicable_weight += 0.5
             else:
                 # User matched restriction (since scheme is eligible)
-                total_weight += 1.0
-        else:
-            # Unrestricted criterion (open to all)
-            total_weight += 0.5
+                applicable_weight += 1.0
 
-    match_score = round((total_weight / len(dimensions)) * 100, 1)
+    if applicable_count > 0:
+        match_score = round((applicable_weight / applicable_count) * 100, 1)
+    else:
+        # Scheme restricts nothing (open to all) — an eligible user matches fully.
+        match_score = 100.0
 
     eligible = len(reasons) == 0
 

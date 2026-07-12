@@ -68,7 +68,7 @@ def generate_eval_dataset():
         })
 
         print(f"         ✓ {len(contexts)} contexts retrieved, answer: {len(answer)} chars")
-        time.sleep(5)  # 5s delay between calls to respect the 15 RPM free tier limit
+        time.sleep(15)  # 5s delay between calls to respect the 15 RPM free tier limit
 
     # Save to file
     with open(OUTPUT_PATH, "w", encoding="utf-8") as f:
