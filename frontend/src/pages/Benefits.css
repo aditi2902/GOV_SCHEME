@@ -4,7 +4,7 @@
 
 .benefits-page {
   min-height: 100vh;
-  padding-top: 84px;
+  padding-top: calc(var(--header-h) + 20px);
   padding-bottom: 80px;
 }
 
@@ -222,7 +222,7 @@
 }
 
 .benefits-tab--active {
-  background: rgba(108, 99, 255, 0.12);
+  background: rgba(21, 101, 192, 0.12);
   border-color: var(--primary);
   color: var(--primary-light);
 }

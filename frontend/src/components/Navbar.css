@@ -4,17 +4,28 @@
   left: 0;
   right: 0;
   z-index: 1000;
-  background: rgba(10, 14, 26, 0.85);
-  backdrop-filter: blur(20px);
-  -webkit-backdrop-filter: blur(20px);
+  background: var(--bg-glass-strong);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
   border-bottom: 1px solid var(--border);
+  box-shadow: var(--shadow-sm);
+}
+
+/* Tricolor hairline under the navbar — subtle government cue */
+.navbar::after {
+  content: '';
+  position: absolute;
+  left: 0; right: 0; bottom: -3px;
+  height: 3px;
+  background: var(--gradient-tri);
+  opacity: 0.9;
 }
 
 .navbar-inner {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  height: 64px;
+  height: var(--navbar-h);
 }
 
 .navbar-brand {
@@ -24,42 +35,127 @@
   text-decoration: none;
   color: var(--text-primary);
 }
-
-.navbar-icon {
-  font-size: 1.5rem;
-  color: var(--primary);
+.navbar-logo {
+  display: grid;
+  place-items: center;
+  width: 36px;
+  height: 36px;
+  border-radius: var(--radius-sm);
+  background: var(--gradient-primary);
+  color: #fff;
+  font-size: 1.25rem;
 }
-
 .navbar-title {
   font-family: var(--font-display);
-  font-size: 1.375rem;
-  font-weight: 700;
+  font-size: 1.3rem;
+  font-weight: 800;
   letter-spacing: -0.01em;
+  color: var(--text-primary);
 }
 
 .navbar-links {
   display: flex;
   align-items: center;
-  gap: 8px;
+  gap: 4px;
+  margin-left: auto;
+  margin-right: 16px;
 }
-
 .navbar-link {
-  padding: 8px 16px;
-  font-size: 0.875rem;
+  padding: 8px 15px;
+  font-size: 0.9rem;
   font-weight: 500;
   color: var(--text-secondary);
   border-radius: var(--radius-sm);
   transition: all var(--transition-fast);
   text-decoration: none;
 }
-.navbar-link:hover {
-  color: var(--text-primary);
-  background: rgba(255, 255, 255, 0.05);
+.navbar-link:hover { color: var(--primary); background: var(--bg-subtle); }
+.navbar-link.active { color: var(--primary); background: rgba(21, 101, 192, 0.1); font-weight: 600; }
+
+.mobile-only-link { display: none; }
+
+/* Actions cluster */
+.navbar-actions { display: flex; align-items: center; gap: 10px; }
+
+.navbar-theme-btn {
+  display: grid;
+  place-items: center;
+  width: 38px;
+  height: 38px;
+  border-radius: var(--radius-sm);
+  background: var(--bg-subtle);
+  border: 1px solid var(--border);
+  color: var(--text-secondary);
+  font-size: 1.2rem;
+  cursor: pointer;
+  transition: all var(--transition-fast);
 }
-.navbar-link.active {
-  color: var(--primary-light);
-  background: rgba(108, 99, 255, 0.1);
+.navbar-theme-btn:hover { color: var(--primary); border-color: var(--border-accent); }
+
+/* User avatar + dropdown */
+.navbar-user { position: relative; }
+.navbar-avatar {
+  display: grid;
+  place-items: center;
+  width: 38px;
+  height: 38px;
+  border-radius: 50%;
+  background: var(--gradient-primary);
+  color: #fff;
+  font-size: 0.8rem;
+  font-weight: 700;
+  border: none;
+  cursor: pointer;
+  transition: transform var(--transition-fast);
 }
+.navbar-avatar:hover { transform: scale(1.05); }
+
+.navbar-menu-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 1;
+}
+.navbar-menu {
+  position: absolute;
+  top: 48px;
+  right: 0;
+  z-index: 2;
+  min-width: 220px;
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  box-shadow: var(--shadow-lg);
+  padding: 8px;
+  animation: fadeInUp 0.18s ease-out;
+}
+.navbar-menu-head {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  padding: 8px 10px 12px;
+  border-bottom: 1px solid var(--border);
+  margin-bottom: 6px;
+}
+.navbar-menu-name { font-weight: 700; color: var(--text-primary); font-size: 0.92rem; }
+.navbar-menu-email { font-size: 0.78rem; color: var(--text-muted); }
+.navbar-menu-item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  width: 100%;
+  padding: 10px;
+  font-size: 0.88rem;
+  font-weight: 500;
+  color: var(--text-secondary);
+  background: transparent;
+  border: none;
+  border-radius: var(--radius-sm);
+  cursor: pointer;
+  text-decoration: none;
+  transition: all var(--transition-fast);
+}
+.navbar-menu-item:hover { background: var(--bg-subtle); color: var(--primary); }
+.navbar-menu-item svg { font-size: 1.1rem; }
 
 .navbar-toggle {
   display: none;
@@ -72,26 +168,24 @@
 }
 
 @media (max-width: 768px) {
-  .navbar-toggle {
-    display: flex;
-  }
+  .navbar-toggle { display: flex; }
+  .navbar-signin { display: none; }
+  .mobile-only-link { display: block; }
   .navbar-links {
     display: none;
     position: absolute;
-    top: 64px;
+    top: var(--navbar-h);
     left: 0;
     right: 0;
     flex-direction: column;
-    background: var(--bg-glass-strong);
-    backdrop-filter: blur(20px);
+    align-items: stretch;
+    gap: 4px;
+    margin: 0;
+    background: var(--bg-card);
     padding: 16px;
     border-bottom: 1px solid var(--border);
+    box-shadow: var(--shadow-md);
   }
-  .navbar-links.open {
-    display: flex;
-  }
-  .navbar-link {
-    width: 100%;
-    padding: 12px 16px;
-  }
+  .navbar-links.open { display: flex; }
+  .navbar-link { width: 100%; padding: 12px 16px; }
 }

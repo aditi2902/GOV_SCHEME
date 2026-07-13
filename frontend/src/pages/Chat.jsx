@@ -1,10 +1,23 @@
 import { useState, useRef, useEffect } from 'react';
-import { HiOutlinePaperAirplane, HiOutlineChat, HiOutlineUser } from 'react-icons/hi';
+import { HiOutlinePaperAirplane, HiOutlineChat, HiOutlineUser, HiOutlineCheckCircle } from 'react-icons/hi';
 import { RiGovernmentLine } from 'react-icons/ri';
 import { chatWithAI } from '../api';
+import { useAuth } from '../context/AuthContext';
+import { getUserData } from '../utils/storage';
+import { buildAnalysisPayload } from '../utils/profile';
 import './Chat.css';
 
 export default function Chat() {
+  const { user } = useAuth();
+
+  // Prefer the logged-in user's saved dashboard profile so answers are
+  // personalized without asking them to describe themselves again. Falls
+  // back to whatever profile was used in the current session's last
+  // Analyze run (guests, or a logged-in user who hasn't saved one yet).
+  const savedProfile = user ? getUserData(user.email).profile : null;
+  const hasPersonalizedContext = Boolean(
+    savedProfile || sessionStorage.getItem('userText')
+  );
   const [messages, setMessages] = useState([
     {
       role: 'assistant',
@@ -32,7 +45,9 @@ export default function Chat() {
     setLoading(true);
 
     try {
-      const userText = sessionStorage.getItem('userText') || null;
+      const userText = savedProfile
+        ? JSON.stringify(buildAnalysisPayload(savedProfile))
+        : sessionStorage.getItem('userText') || null;
       const res = await chatWithAI(q, userText);
       setMessages(prev => [...prev, { role: 'assistant', content: res.answer }]);
     } catch (err) {
@@ -63,6 +78,11 @@ export default function Chat() {
           <p className="chat-subtitle">
             Powered by RAG — answers from actual scheme documents
           </p>
+          {hasPersonalizedContext && (
+            <p className="chat-personalized-note">
+              <HiOutlineCheckCircle /> Using your saved profile to personalize answers
+            </p>
+          )}
         </div>
 
         <div className="chat-window glass-card">

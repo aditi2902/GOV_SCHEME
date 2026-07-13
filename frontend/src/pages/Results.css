@@ -1,6 +1,6 @@
 .results-page {
   min-height: 100vh;
-  padding-top: 84px;
+  padding-top: calc(var(--header-h) + 20px);
   padding-bottom: 80px;
 }
 
@@ -89,8 +89,8 @@
   font-size: 0.875rem;
   font-weight: 500;
   color: var(--text-primary);
-  background: rgba(108, 99, 255, 0.08);
-  border: 1px solid rgba(108, 99, 255, 0.15);
+  background: rgba(21, 101, 192, 0.08);
+  border: 1px solid rgba(21, 101, 192, 0.15);
   border-radius: var(--radius-full);
 }
 
@@ -155,8 +155,8 @@
   border-color: rgba(255, 179, 71, 0.15);
 }
 .gap-stat--primary {
-  background: rgba(108, 99, 255, 0.06);
-  border-color: rgba(108, 99, 255, 0.15);
+  background: rgba(21, 101, 192, 0.06);
+  border-color: rgba(21, 101, 192, 0.15);
 }
 
 .gap-stat-icon {

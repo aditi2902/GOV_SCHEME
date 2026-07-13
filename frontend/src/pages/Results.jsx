@@ -283,9 +283,9 @@ export default function Results() {
                         <li 
                           key={scheme.slug || i} 
                           onClick={() => setActiveModal(scheme.slug)}
-                          style={{ 
-                            padding: '0.75rem 0', 
-                            borderBottom: '1px solid rgba(255,255,255,0.05)', 
+                          style={{
+                            padding: '0.75rem 0',
+                            borderBottom: '1px solid var(--border)',
                             cursor: 'pointer',
                             display: 'flex',
                             gap: '1rem',
@@ -295,7 +295,7 @@ export default function Results() {
                           onMouseEnter={(e) => e.currentTarget.style.color = 'var(--primary)'}
                           onMouseLeave={(e) => e.currentTarget.style.color = 'inherit'}
                         >
-                          <span style={{ fontWeight: '600', color: 'rgba(255,255,255,0.5)', minWidth: '24px' }}>{i + 7}.</span> 
+                          <span style={{ fontWeight: '600', color: 'var(--text-muted)', minWidth: '24px' }}>{i + 7}.</span>
                           <span>{scheme.scheme_name}</span>
                         </li>
                       ))}

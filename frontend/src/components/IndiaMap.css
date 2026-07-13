@@ -1,0 +1,33 @@
+.india-map-svg {
+  width: 100%;
+  height: 100%;
+  overflow: visible;
+}
+
+.india-map-path {
+  fill: var(--bg-card);
+  stroke: var(--primary);
+  stroke-width: 3;
+  stroke-linejoin: round;
+}
+
+.india-map-pin-dot {
+  fill: var(--gov-orange);
+  stroke: var(--bg-card);
+  stroke-width: 1.5;
+  cursor: pointer;
+}
+
+.india-map-pin-pulse {
+  fill: var(--gov-orange);
+  opacity: 0.3;
+  animation: india-pin-pulse 3s ease-out infinite;
+  transform-origin: center;
+  transform-box: fill-box;
+  pointer-events: none;
+}
+
+@keyframes india-pin-pulse {
+  0% { transform: scale(0.5); opacity: 0.45; }
+  100% { transform: scale(2.4); opacity: 0; }
+}

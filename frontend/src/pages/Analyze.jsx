@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import {
   HiOutlineUser,
@@ -12,6 +12,9 @@ import {
   HiOutlineCheckCircle,
 } from 'react-icons/hi';
 import { analyzeForm, analyzeFormQuick } from '../api';
+import { useAuth } from '../context/AuthContext';
+import { getUserData, saveUserProfile, saveUserResult } from '../utils/storage';
+import { buildAnalysisPayload } from '../utils/profile';
 import './Analyze.css';
 
 // ── Static Data ────────────────────────────────────────
@@ -69,6 +72,18 @@ const STEPS = [
 ];
 
 // ── Helper Components ──────────────────────────────────
+
+function StepIntro({ icon: Icon, title, desc }) {
+  return (
+    <div className="step-intro">
+      <div className="step-intro-icon"><Icon /></div>
+      <div>
+        <h2 className="heading-md">{title}</h2>
+        <p className="step-desc">{desc}</p>
+      </div>
+    </div>
+  );
+}
 
 function FormField({ label, required, children, hint }) {
   return (
@@ -144,9 +159,22 @@ export default function Analyze() {
   const [form, setForm] = useState(INITIAL_FORM);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
+  const [prefilled, setPrefilled] = useState(false);
   const navigate = useNavigate();
+  const { user } = useAuth();
 
   const set = (field, value) => setForm((f) => ({ ...f, [field]: value }));
+
+  // Prefill from the logged-in user's saved profile so they don't re-enter details
+  useEffect(() => {
+    if (user) {
+      const { profile } = getUserData(user.email);
+      if (profile) {
+        setForm({ ...INITIAL_FORM, ...profile });
+        setPrefilled(true);
+      }
+    }
+  }, [user]);
 
   // ── Validation per step ──────────────────────────────
 
@@ -188,34 +216,6 @@ export default function Analyze() {
   };
   const prevStep = () => { setError(''); setStep((s) => Math.max(s - 1, 1)); };
 
-  // ── Build payload ────────────────────────────────────
-
-  const buildPayload = () => ({
-    age: parseInt(form.age),
-    gender: form.gender.toLowerCase(),
-    state: form.state,
-    state_other: form.state_other || null,
-    income: parseFloat(form.income),
-    category: form.category,
-    category_other: form.category_other || null,
-    education_level: form.education_level,
-    education_level_other: form.education_level_other || null,
-    course: form.course || null,
-    course_other: form.course_other || null,
-    cgpa: form.cgpa ? parseFloat(form.cgpa) : null,
-    year_of_study: form.year_of_study ? parseInt(form.year_of_study) : null,
-    disability: form.disability,
-    minority: form.minority,
-    community: form.community,
-    community_other: form.community_other || null,
-    residence_type: form.residence_type || null,
-    marital_status: form.marital_status
-      ? form.marital_status.toLowerCase().replace(' / ', '/').split('/')[0].trim()
-      : null,
-    siblings: form.siblings || null,
-    institution_type: form.institution_type || null,
-  });
-
   // ── Submit ───────────────────────────────────────────
 
   const handleSubmit = async (quick = false) => {
@@ -223,11 +223,17 @@ export default function Analyze() {
     setError('');
     setLoading(true);
     try {
-      const payload = buildPayload();
+      const payload = buildAnalysisPayload(form);
       const fn = quick ? analyzeFormQuick : analyzeForm;
       const result = await fn(payload);
       sessionStorage.setItem('analysisResult', JSON.stringify(result));
       sessionStorage.setItem('userText', JSON.stringify(payload));
+      // Persist profile + results for the logged-in user so their dashboard
+      // remembers them and they don't have to re-enter details next time.
+      if (user) {
+        saveUserProfile(user.email, form);
+        saveUserResult(user.email, result);
+      }
       navigate('/results');
     } catch (err) {
       setError(`Analysis failed: ${err.message}. Make sure the backend is running.`);
@@ -240,10 +246,11 @@ export default function Analyze() {
 
   const renderStep1 = () => (
     <div className="form-step">
-      <div className="step-intro">
-        <h2 className="heading-md">Personal Information</h2>
-        <p className="step-desc">Basic personal details used to match age, gender, and category-specific schemes.</p>
-      </div>
+      <StepIntro
+        icon={HiOutlineUser}
+        title="Personal Information"
+        desc="Basic personal details used to match age, gender, and category-specific schemes."
+      />
 
       <div className="ff-grid-2">
         <FormField label="Age" required>
@@ -302,7 +309,7 @@ export default function Analyze() {
       </FormField>
 
       <div className="ff-toggles">
-        <label className="toggle-row" htmlFor="disability-toggle">
+        <label className={`toggle-row ${form.disability ? 'toggle-row--active' : ''}`} htmlFor="disability-toggle">
           <div className="toggle-text">
             <span className="toggle-title">Person with Disability (PwD)</span>
             <span className="toggle-desc">Check if you have a recognized disability (≥ 40%)</span>
@@ -320,7 +327,7 @@ export default function Analyze() {
           </div>
         </label>
 
-        <label className="toggle-row" htmlFor="minority-toggle">
+        <label className={`toggle-row ${form.minority ? 'toggle-row--active' : ''}`} htmlFor="minority-toggle">
           <div className="toggle-text">
             <span className="toggle-title">Minority Community</span>
             <span className="toggle-desc">Check if you belong to a recognized minority community</span>
@@ -379,10 +386,11 @@ export default function Analyze() {
 
   const renderStep2 = () => (
     <div className="form-step">
-      <div className="step-intro">
-        <h2 className="heading-md">Location & Income</h2>
-        <p className="step-desc">Your state determines eligibility for state-specific schemes. Income filters income-capped scholarships.</p>
-      </div>
+      <StepIntro
+        icon={HiOutlineLocationMarker}
+        title="Location & Income"
+        desc="Your state determines eligibility for state-specific schemes. Income filters income-capped scholarships."
+      />
 
       <FormField label="State / Union Territory" required>
         <SelectWithOther
@@ -442,10 +450,11 @@ export default function Analyze() {
     const showCourse = COURSE_REQUIRED_FOR.includes(form.education_level);
     return (
       <div className="form-step">
-        <div className="step-intro">
-          <h2 className="heading-md">Education Details</h2>
-          <p className="step-desc">Your education level and course are the most important factors for scholarship matching.</p>
-        </div>
+        <StepIntro
+          icon={HiOutlineAcademicCap}
+          title="Education Details"
+          desc="Your education level and course are the most important factors for scholarship matching."
+        />
 
         <FormField label="Current / Highest Education Level" required>
           <SelectWithOther
@@ -544,10 +553,11 @@ export default function Analyze() {
     const effCourse = form.course === 'Other' ? form.course_other : form.course;
     return (
       <div className="form-step">
-        <div className="step-intro">
-          <h2 className="heading-md">Review Your Profile</h2>
-          <p className="step-desc">Double-check your details before we run the matching engine.</p>
-        </div>
+        <StepIntro
+          icon={HiOutlineCheckCircle}
+          title="Review Your Profile"
+          desc="Double-check your details before we run the matching engine."
+        />
 
         <div className="review-grid">
           <ReviewCard icon="🧑" label="Age" value={form.age} />
@@ -607,6 +617,11 @@ export default function Analyze() {
             Fill in your details accurately. More information = more precise scheme matching.
             All fields marked <span style={{ color: 'var(--secondary)' }}>*</span> are required.
           </p>
+          {prefilled && (
+            <p className="analyze-prefill-note">
+              ✅ We loaded your saved details — review and update anything that's changed.
+            </p>
+          )}
         </div>
 
         {/* Step Progress Bar */}
